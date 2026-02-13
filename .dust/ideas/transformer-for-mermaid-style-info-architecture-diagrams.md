@@ -79,30 +79,144 @@ site MyApp
 | **d3-dag** | Clean DAG-specific algorithms | DAGs without nesting |
 | **Cytoscape.js** | Full graph library with multiple layouts and interaction | Interactive exploration |
 
-**Recommendation:** ELK for the primary layout engine (best compound graph support), with d3-hierarchy as a lightweight option for simple tree sitemaps.
-
 ## Codebase Context
 
 The project (`info-arch-pad`) is a fresh Bun/TypeScript project with no application code yet — just `console.log("Hello via Bun!")`. This means the format and transformer can be designed from scratch with no constraints from existing code. The project uses TypeScript with strict mode and ESNext targets.
 
 ## Open Questions
 
-1. **Indentation vs. braces for nesting?** Indentation (like YAML/Python) is more readable for simple trees but harder to parse and error-prone with mixed tabs/spaces. Braces (like D2/JSON) are unambiguous but more verbose. Or both?
+### Should nesting use indentation or braces?
 
-2. **How to distinguish containment from navigation?** Should containment be implicit (indentation = parent-child) and navigation explicit (`-->`)? Or should both be explicit?
+#### Indentation (like YAML/Python)
 
-3. **What rendering target?** SVG in-browser? CLI-generated PNG/SVG? Both? Should it integrate with existing tools (e.g., render inside Mermaid's ecosystem, or output Mermaid-compatible syntax)?
+More readable for simple trees and feels natural for hierarchical IA content. Matches how sitemaps are typically sketched. Downside: harder to parse reliably, error-prone with mixed tabs/spaces.
 
-4. **How much of the Garrett visual vocabulary to support?** The full vocabulary includes page stacks, decision points, conditional branches, clusters, and areas. Should the MVP support all of these or start with just pages, sections, and links?
+#### Braces (like D2/JSON)
 
-5. **Multiple views from one model?** Like Structurizr, should one IA definition support rendering as a full sitemap, a section overview, a single page's component layout, or a navigation flow? Or is a single view sufficient?
+Unambiguous parsing, no whitespace sensitivity. Works better with copy-paste and code generation. Downside: more verbose, less visually clean for deeply nested trees.
 
-6. **Metadata syntax?** Inline annotations (`home / (landing-page) [live]`) vs. block properties (`home { type: landing-page, status: live }`) vs. front-matter sections?
+#### Both (indentation as default, braces as escape hatch)
 
-7. **Should it support parameterized/dynamic routes?** E.g., `/products/:id` or `/blog/:year/:slug`. If so, how should these render in the diagram — as page stacks? With sample data?
+Maximizes ergonomics for simple cases while allowing precision when needed. Adds parser complexity but provides the best developer experience.
 
-8. **Interactive or static output?** Should the rendered diagram be a static image/SVG, or an interactive explorable graph (click to expand sections, hover for metadata)?
+### How should containment and navigation be distinguished?
 
-9. **Parser implementation?** Hand-written recursive descent parser (full control), PEG grammar (e.g., via pegjs/peggy), or tree-sitter grammar (for editor integration)?
+#### Implicit containment via nesting, explicit navigation via arrows
 
-10. **How to handle cross-links between distant parts of the hierarchy?** E.g., a blog post linking to a product page. Should these be declared inline or in a separate "links" section?
+Indentation means "is a child of" automatically. Navigation links use `-->` syntax. This is the most intuitive mapping: structure = tree, links = arrows.
+
+#### Both explicit
+
+Require explicit syntax for both relationships (e.g., `contains:` and `links:`). More verbose but completely unambiguous — useful if the same pair of nodes can have both a containment and a navigation relationship.
+
+### What should the primary rendering target be?
+
+#### SVG output (CLI-generated)
+
+Parse the DSL → compute layout → emit SVG. Works everywhere, easy to embed in docs and READMEs, composable with CI pipelines. Can be served statically.
+
+#### Interactive browser app
+
+Render in a web app with pan/zoom, click-to-expand, hover-for-metadata. Richer experience but requires a runtime environment. Could use a dev server approach like Mermaid Live Editor.
+
+#### SVG-first with optional interactive viewer
+
+Start with static SVG generation as the core pipeline. Layer an optional browser-based viewer on top that reuses the same parser and layout. Best of both worlds, and the SVG path keeps the tool useful in non-browser contexts.
+
+### How much of the Garrett visual vocabulary should the MVP support?
+
+#### Minimal: pages, sections, and navigation links only
+
+Enough to express sitemaps and basic navigation flows. Keeps the DSL simple and the parser small. Can always add more node types later.
+
+#### Moderate: add page stacks and decision points
+
+Page stacks cover the common "template generates many pages" pattern (e.g., product detail). Decision points cover conditional flows (logged-in vs. anonymous). These two additions cover most real-world IA diagrams.
+
+#### Full vocabulary from day one
+
+Include page stacks, decision points, conditional branches, clusters, areas, and connectors. Comprehensive but risks over-engineering the MVP and slowing iteration.
+
+### Should one model support multiple diagram views?
+
+#### Single view per file
+
+One DSL file = one diagram. Simple mental model, easy to implement. If you want different views, you write different files (possibly importing shared definitions).
+
+#### Multiple views from one model (Structurizr-style)
+
+Define the full IA model once, then declare views that filter/focus on subsets: a full sitemap view, a section-detail view, a navigation-flow view. More powerful but significantly more complex to implement.
+
+### What syntax should be used for metadata?
+
+#### Inline parenthetical annotations
+
+`home / (landing-page) [live]` — compact, stays on one line. Good for a small number of attributes. Gets unwieldy with many properties.
+
+#### Block properties
+
+```
+home / {
+  type: landing-page
+  status: live
+  owner: content-team
+}
+```
+
+More structured, supports arbitrary key-value pairs. Verbose but scalable.
+
+#### Front-matter style per node
+
+Use a YAML-like front-matter block at the top of each node definition. Familiar to developers but might clash with the indentation-based hierarchy.
+
+### Should dynamic routes render as page stacks?
+
+#### Yes, dynamic routes automatically become page stacks
+
+`/products/:id` implies "many pages from one template" — render as a stacked/shadowed rectangle (Garrett convention). Simple rule, no extra syntax needed.
+
+#### No, page stacks are explicitly declared
+
+Dynamic routes and page stacks are separate concepts. A route parameter is about URL structure; a page stack is about visual representation. Keep them independent and let the author choose.
+
+### What parser implementation should be used?
+
+#### PEG grammar (peggy)
+
+Declarative grammar definition, generates a fast parser, good error messages with some effort. Well-suited to DSL parsing. peggy is actively maintained and works with TypeScript.
+
+#### Hand-written recursive descent
+
+Full control over parsing, error messages, and incremental parsing. More code to write but no build step or external dependency. Easier to evolve the grammar iteratively.
+
+#### Tree-sitter grammar
+
+Designed for editor integration — syntax highlighting, folding, incremental reparsing. More complex to author but enables first-class editor support from day one. Overkill if editor integration isn't a priority.
+
+### How should cross-links between distant hierarchy nodes be handled?
+
+#### Inline at the source node
+
+`--> /products/detail` declared inside the blog post node. Keeps links close to where they originate but can clutter deeply nested nodes.
+
+#### Separate links section
+
+A top-level `links:` block that declares connections between any two nodes by path. Cleaner separation of structure and navigation, easier to see all cross-cutting links at once. But splits the mental model across two locations.
+
+#### Both
+
+Allow inline links for local navigation and a separate section for cross-cutting links. Most flexible, but adds cognitive load around which style to use when.
+
+### Should the initial output be static or interactive?
+
+#### Static only (SVG/PNG)
+
+Simplest to implement. Output can be used anywhere — docs, slides, PRs, wikis. No runtime dependency. Good enough for most IA documentation use cases.
+
+#### Interactive only (browser-based)
+
+Pan, zoom, expand/collapse sections, hover for metadata. Better for exploring large IAs. But limits where the output can be used.
+
+#### Static by default, interactive as opt-in
+
+Generate static SVG as the primary output. Provide a `--serve` flag or companion viewer for interactive exploration. This avoids forcing interactivity on users who just want an image in their README.
