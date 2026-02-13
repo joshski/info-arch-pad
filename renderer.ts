@@ -1,4 +1,6 @@
 import type { Layout, LayoutNode, LayoutEdge } from "./layout";
+import type { Theme } from "./theme";
+import { defaultTheme } from "./theme";
 
 const SVG_PADDING = 20;
 const STACK_OFFSET = 6;
@@ -31,7 +33,7 @@ function renderRect(
   return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}/>`;
 }
 
-function renderLeafNode(node: LayoutNode): string {
+function renderLeafNode(node: LayoutNode, theme: Theme): string {
   const parts: string[] = [];
 
   if (node.isPageStack) {
@@ -41,7 +43,7 @@ function renderLeafNode(node: LayoutNode): string {
         node.y + STACK_OFFSET * 2,
         node.width,
         node.height,
-        { fill: "#f5f5f5" }
+        { fill: theme.stackBackFill, stroke: theme.nodeStroke }
       )
     );
     parts.push(
@@ -50,88 +52,91 @@ function renderLeafNode(node: LayoutNode): string {
         node.y + STACK_OFFSET,
         node.width,
         node.height,
-        { fill: "#fafafa" }
+        { fill: theme.stackMidFill, stroke: theme.nodeStroke }
       )
     );
   }
 
-  parts.push(renderRect(node.x, node.y, node.width, node.height));
+  parts.push(renderRect(node.x, node.y, node.width, node.height, {
+    fill: theme.nodeFill,
+    stroke: theme.nodeStroke,
+  }));
 
   let textY = node.y + NODE_PADDING_Y + FONT_SIZE;
   parts.push(
-    `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${FONT_SIZE}" font-weight="bold" fill="#333">${escapeXml(node.name)}</text>`
+    `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${FONT_SIZE}" font-weight="bold" fill="${theme.nameText}">${escapeXml(node.name)}</text>`
   );
 
   if (node.path) {
     textY += LINE_HEIGHT;
     parts.push(
-      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="#666">${escapeXml(node.path)}</text>`
+      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.pathText}">${escapeXml(node.path)}</text>`
     );
   }
 
   if (node.annotation) {
     textY += LINE_HEIGHT;
     parts.push(
-      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="#999" font-style="italic">${escapeXml(node.annotation)}</text>`
+      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.annotationText}" font-style="italic">${escapeXml(node.annotation)}</text>`
     );
   }
 
   for (const comp of node.components) {
     textY += LINE_HEIGHT;
     parts.push(
-      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="#888">[${escapeXml(comp)}]</text>`
+      `<text x="${node.x + NODE_PADDING_X}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.componentText}">[${escapeXml(comp)}]</text>`
     );
   }
 
   return parts.join("\n");
 }
 
-function renderSectionNode(node: LayoutNode): string {
+function renderSectionNode(node: LayoutNode, theme: Theme): string {
   const parts: string[] = [];
 
   parts.push(
     renderRect(node.x, node.y, node.width, node.height, {
-      fill: "#fafafa",
-      stroke: "#aaa",
+      fill: theme.sectionFill,
+      stroke: theme.sectionStroke,
       dasharray: "4 2",
     })
   );
 
   parts.push(
-    `<text x="${node.x + NODE_PADDING_X}" y="${node.y + NODE_PADDING_Y + FONT_SIZE}" font-family="sans-serif" font-size="${FONT_SIZE}" font-weight="bold" fill="#333">${escapeXml(node.name)}</text>`
+    `<text x="${node.x + NODE_PADDING_X}" y="${node.y + NODE_PADDING_Y + FONT_SIZE}" font-family="sans-serif" font-size="${FONT_SIZE}" font-weight="bold" fill="${theme.nameText}">${escapeXml(node.name)}</text>`
   );
 
   if (node.path) {
     parts.push(
-      `<text x="${node.x + NODE_PADDING_X}" y="${node.y + NODE_PADDING_Y + FONT_SIZE + LINE_HEIGHT}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="#666">${escapeXml(node.path)}</text>`
+      `<text x="${node.x + NODE_PADDING_X}" y="${node.y + NODE_PADDING_Y + FONT_SIZE + LINE_HEIGHT}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.pathText}">${escapeXml(node.path)}</text>`
     );
   }
 
   for (const child of node.children) {
-    parts.push(renderNode(child));
+    parts.push(renderNode(child, theme));
   }
 
   return parts.join("\n");
 }
 
-function renderNode(node: LayoutNode): string {
+function renderNode(node: LayoutNode, theme: Theme): string {
   if (node.children.length > 0) {
-    return renderSectionNode(node);
+    return renderSectionNode(node, theme);
   }
-  return renderLeafNode(node);
+  return renderLeafNode(node, theme);
 }
 
-function renderEdge(edge: LayoutEdge): string {
+function renderEdge(edge: LayoutEdge, theme: Theme): string {
   const dy = edge.y2 - edge.y1;
   const offset = Math.min(Math.abs(dy) * 0.5, 40);
   const cp1x = edge.x1;
   const cp1y = edge.y1 + offset;
   const cp2x = edge.x2;
   const cp2y = edge.y2 - offset;
-  return `<path d="M ${edge.x1} ${edge.y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${edge.x2} ${edge.y2}" stroke="#666" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>`;
+  return `<path d="M ${edge.x1} ${edge.y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${edge.x2} ${edge.y2}" stroke="${theme.edgeStroke}" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>`;
 }
 
-export function render(layoutResult: Layout): string {
+export function render(layoutResult: Layout, theme: Theme = defaultTheme): string {
   const width = layoutResult.width + SVG_PADDING * 2;
   const height = layoutResult.height + SVG_PADDING * 2;
 
@@ -142,17 +147,17 @@ export function render(layoutResult: Layout): string {
   );
   parts.push(`<defs>`);
   parts.push(
-    `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#666"/></marker>`
+    `<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="${theme.edgeStroke}"/></marker>`
   );
   parts.push(`</defs>`);
   parts.push(`<g transform="translate(${SVG_PADDING}, ${SVG_PADDING})">`);
 
   for (const node of layoutResult.nodes) {
-    parts.push(renderNode(node));
+    parts.push(renderNode(node, theme));
   }
 
   for (const edge of layoutResult.edges) {
-    parts.push(renderEdge(edge));
+    parts.push(renderEdge(edge, theme));
   }
 
   parts.push(`</g>`);

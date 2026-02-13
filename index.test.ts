@@ -96,3 +96,45 @@ test("shows error for missing input file", async () => {
   expect(exitCode).not.toBe(0);
   expect(stderr).toContain("Could not read file");
 });
+
+test("applies dark theme with --theme flag", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--theme", "dark"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = await new Response(proc.stdout).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain("<svg");
+  // Dark theme node fill
+  expect(stdout).toContain('fill="#1e1e2e"');
+  // Should NOT contain default white fill
+  expect(stdout).not.toContain('fill="#fff"');
+
+  await rm(dir, { recursive: true });
+});
+
+test("shows error for unknown theme", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--theme", "nope"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stderr = await new Response(proc.stderr).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain('Unknown theme "nope"');
+  expect(stderr).toContain("default");
+  expect(stderr).toContain("dark");
+
+  await rm(dir, { recursive: true });
+});

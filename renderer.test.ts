@@ -2,6 +2,7 @@ import { test, expect } from "bun:test";
 import { render } from "./renderer";
 import { layout } from "./layout";
 import type { IADiagram } from "./model";
+import { darkTheme, defaultTheme } from "./theme";
 
 function renderDiagram(diagram: IADiagram): string {
   return render(layout(diagram));
@@ -208,4 +209,93 @@ test("escapes special XML characters", () => {
 
   expect(svg).toContain("a&amp;b");
   expect(svg).not.toContain("a&b");
+});
+
+test("uses default theme colors when no theme specified", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain(`fill="${defaultTheme.nodeFill}"`);
+  expect(svg).toContain(`fill="${defaultTheme.nameText}"`);
+});
+
+test("renders with dark theme colors", () => {
+  const positioned = layout({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  });
+  const svg = render(positioned, darkTheme);
+
+  expect(svg).toContain(`fill="${darkTheme.nodeFill}"`);
+  expect(svg).toContain(`stroke="${darkTheme.nodeStroke}"`);
+  expect(svg).toContain(`fill="${darkTheme.nameText}"`);
+  expect(svg).toContain(`fill="${darkTheme.pathText}"`);
+});
+
+test("dark theme applies to edges", () => {
+  const positioned = layout({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [{ target: "about" }],
+        components: [],
+      },
+      {
+        name: "about",
+        path: "/about",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  });
+  const svg = render(positioned, darkTheme);
+
+  expect(svg).toContain(`stroke="${darkTheme.edgeStroke}"`);
+  expect(svg).toContain(`fill="${darkTheme.edgeStroke}"`);
+});
+
+test("dark theme applies to page stacks", () => {
+  const positioned = layout({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "detail",
+        path: "/products/:id",
+        isPageStack: true,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  });
+  const svg = render(positioned, darkTheme);
+
+  expect(svg).toContain(`fill="${darkTheme.stackBackFill}"`);
+  expect(svg).toContain(`fill="${darkTheme.stackMidFill}"`);
 });
