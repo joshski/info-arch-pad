@@ -122,7 +122,13 @@ function renderNode(node: LayoutNode): string {
 }
 
 function renderEdge(edge: LayoutEdge): string {
-  return `<line x1="${edge.x1}" y1="${edge.y1}" x2="${edge.x2}" y2="${edge.y2}" stroke="#666" stroke-width="1.5" marker-end="url(#arrowhead)"/>`;
+  const dy = edge.y2 - edge.y1;
+  const offset = Math.min(Math.abs(dy) * 0.5, 40);
+  const cp1x = edge.x1;
+  const cp1y = edge.y1 + offset;
+  const cp2x = edge.x2;
+  const cp2y = edge.y2 - offset;
+  return `<path d="M ${edge.x1} ${edge.y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${edge.x2} ${edge.y2}" stroke="#666" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>`;
 }
 
 export function render(layoutResult: Layout): string {

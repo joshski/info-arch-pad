@@ -110,7 +110,7 @@ test("renders navigation arrows with arrowheads", () => {
 
   expect(svg).toContain("<marker");
   expect(svg).toContain("arrowhead");
-  expect(svg).toContain("<line");
+  expect(svg).toContain("<path");
   expect(svg).toContain('marker-end="url(#arrowhead)"');
 });
 
@@ -161,6 +161,35 @@ test("renders components in nodes", () => {
 
   expect(svg).toContain("[hero]");
   expect(svg).toContain("[featured-products]");
+});
+
+test("renders edges as bezier curves", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [{ target: "about" }],
+        components: [],
+      },
+      {
+        name: "about",
+        path: "/about",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  });
+
+  // Edges should use cubic bezier path, not straight lines
+  expect(svg).not.toContain("<line");
+  expect(svg).toMatch(/<path d="M .* C .*/);
+  expect(svg).toContain('fill="none"');
 });
 
 test("escapes special XML characters", () => {
