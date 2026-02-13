@@ -10,6 +10,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@joshski/dust": "^0.1.33"
+    "@joshski/dust": "^0.1.33",
+    "peggy": "^5.0.6"
   }
 }
