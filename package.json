@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@joshski/dust": "^0.1.33",
+    "@resvg/resvg-js": "^2.6.2",
     "peggy": "^5.0.6"
   }
 }

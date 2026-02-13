@@ -119,6 +119,82 @@ test("applies dark theme with --theme flag", async () => {
   await rm(dir, { recursive: true });
 });
 
+test("writes PNG to file with --format png", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.png");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--format", "png"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const exitCode = await proc.exited;
+
+  expect(exitCode).toBe(0);
+  const png = await readFile(outputFile);
+  // PNG magic bytes
+  expect(png[0]).toBe(0x89);
+  expect(png[1]).toBe(0x50); // P
+  expect(png[2]).toBe(0x4e); // N
+  expect(png[3]).toBe(0x47); // G
+
+  await rm(dir, { recursive: true });
+});
+
+test("PNG renders at 2x resolution", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.png");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  // Get SVG dimensions
+  const svgProc = Bun.spawn(["bun", CLI, inputFile], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const svgOutput = await new Response(svgProc.stdout).text();
+  await svgProc.exited;
+  const widthMatch = svgOutput.match(/width="(\d+)"/);
+  const heightMatch = svgOutput.match(/height="(\d+)"/);
+  const svgWidth = parseInt(widthMatch![1]);
+  const svgHeight = parseInt(heightMatch![1]);
+
+  // Get PNG dimensions
+  const pngProc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--format", "png"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  await pngProc.exited;
+  const png = await readFile(outputFile);
+  // PNG width and height are at bytes 16-23 as big-endian 32-bit integers
+  const pngWidth = png.readUInt32BE(16);
+  const pngHeight = png.readUInt32BE(20);
+
+  expect(pngWidth).toBe(svgWidth * 2);
+  expect(pngHeight).toBe(svgHeight * 2);
+
+  await rm(dir, { recursive: true });
+});
+
+test("shows error for unknown format", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--format", "bmp"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stderr = await new Response(proc.stderr).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain('Unknown format "bmp"');
+
+  await rm(dir, { recursive: true });
+});
+
 test("shows error for unknown theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
