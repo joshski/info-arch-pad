@@ -9,6 +9,9 @@
   "peerDependencies": {
     "typescript": "^5"
   },
+  "scripts": {
+    "build:playground": "bun build playground.ts --outfile playground.bundle.js --target browser"
+  },
   "dependencies": {
     "@joshski/dust": "^0.1.33",
     "peggy": "^5.0.6"

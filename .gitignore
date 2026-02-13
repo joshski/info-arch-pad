@@ -5,6 +5,7 @@ node_modules
 out
 dist
 *.tgz
+playground.bundle.js
 
 # code coverage
 coverage
