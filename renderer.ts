@@ -133,6 +133,18 @@ function renderEdge(edge: LayoutEdge, theme: Theme): string {
   const cp1y = edge.y1 + offset;
   const cp2x = edge.x2;
   const cp2y = edge.y2 - offset;
+
+  if (edge.url) {
+    const parts: string[] = [];
+    parts.push(
+      `<path d="M ${edge.x1} ${edge.y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${edge.x2} ${edge.y2}" stroke="${theme.edgeStroke}" stroke-width="1.5" stroke-dasharray="6 3" fill="none" marker-end="url(#arrowhead)"/>`
+    );
+    parts.push(
+      `<text x="${edge.x2}" y="${edge.y2 + LINE_HEIGHT}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.edgeStroke}" text-anchor="middle">${escapeXml(edge.url)}</text>`
+    );
+    return parts.join("\n");
+  }
+
   return `<path d="M ${edge.x1} ${edge.y1} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${edge.x2} ${edge.y2}" stroke="${theme.edgeStroke}" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>`;
 }
 

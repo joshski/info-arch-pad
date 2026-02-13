@@ -299,3 +299,22 @@ test("dark theme applies to page stacks", () => {
   expect(svg).toContain(`fill="${darkTheme.stackBackFill}"`);
   expect(svg).toContain(`fill="${darkTheme.stackMidFill}"`);
 });
+
+test("renders external links as dashed arrows with URL label", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [{ target: "https://stripe.com/api", url: "https://stripe.com/api" }],
+        components: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain('stroke-dasharray="6 3"');
+  expect(svg).toContain("https://stripe.com/api");
+});

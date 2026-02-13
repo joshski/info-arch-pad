@@ -54,7 +54,7 @@ indentedLine = indent:indent entry:lineEntry trailingWs NL {
 
 indent = spaces:$" "+ { return spaces.length; }
 
-lineEntry = link / component / node
+lineEntry = externalLink / link / component / node
 
 node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation { return a; })? {
   const hasParam = path ? /:/.test(path) : false;
@@ -72,9 +72,15 @@ node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation
   };
 }
 
+externalLink = "--->" _ url:url {
+  return { type: 'link', value: { target: url, url } };
+}
+
 link = "-->" _ target:identifier {
   return { type: 'link', value: { target } };
 }
+
+url = $("http" "s"? "://" [^ \t\n]+)
 
 component = "[" name:$[^\]]+ "]" {
   return { type: 'component', value: name.trim() };

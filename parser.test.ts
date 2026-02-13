@@ -125,6 +125,18 @@ site MyApp
   expect(about.children).toHaveLength(2);
 });
 
+test("parses external links", () => {
+  const result = parse(`
+site MyApp
+  home /
+    ---> https://stripe.com/api
+    ---> https://example.com/webhook
+`);
+  expect(result.nodes[0].links).toHaveLength(2);
+  expect(result.nodes[0].links[0].url).toBe("https://stripe.com/api");
+  expect(result.nodes[0].links[1].url).toBe("https://example.com/webhook");
+});
+
 test("nodes without paths or annotations have undefined for those fields", () => {
   const result = parse(`
 site MyApp

@@ -20,6 +20,7 @@ export interface LayoutEdge {
   y1: number;
   x2: number;
   y2: number;
+  url?: string;
 }
 
 export interface Layout {
@@ -153,16 +154,28 @@ function collectEdges(
 
   if (fromLayout) {
     for (const link of iaNode.links) {
-      const toLayout = findLayoutNode(layoutNodes, link.target);
-      if (toLayout) {
+      if (link.url) {
         edges.push({
           fromNode: iaNode.name,
-          toNode: link.target,
+          toNode: link.url,
           x1: fromLayout.x + fromLayout.width / 2,
           y1: fromLayout.y + fromLayout.height,
-          x2: toLayout.x + toLayout.width / 2,
-          y2: toLayout.y,
+          x2: fromLayout.x + fromLayout.width / 2,
+          y2: fromLayout.y + fromLayout.height + LEVEL_GAP,
+          url: link.url,
         });
+      } else {
+        const toLayout = findLayoutNode(layoutNodes, link.target);
+        if (toLayout) {
+          edges.push({
+            fromNode: iaNode.name,
+            toNode: link.target,
+            x1: fromLayout.x + fromLayout.width / 2,
+            y1: fromLayout.y + fromLayout.height,
+            x2: toLayout.x + toLayout.width / 2,
+            y2: toLayout.y,
+          });
+        }
       }
     }
   }
@@ -194,9 +207,13 @@ export function layout(diagram: IADiagram): Layout {
     ? Math.max(...layoutNodes.map((n) => n.x + n.width))
     : 0;
   const allNodes = layoutNodes.flatMap(collectNodes);
-  const height = allNodes.length > 0
+  const nodeMaxHeight = allNodes.length > 0
     ? Math.max(...allNodes.map((n) => n.y + n.height))
     : 0;
+  const edgeMaxHeight = edges.length > 0
+    ? Math.max(...edges.map((e) => e.y2 + (e.url ? LINE_HEIGHT : 0)))
+    : 0;
+  const height = Math.max(nodeMaxHeight, edgeMaxHeight);
 
   return {
     siteName: diagram.siteName,

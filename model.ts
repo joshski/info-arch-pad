@@ -1,5 +1,6 @@
 export interface IALink {
   target: string;
+  url?: string;
 }
 
 export interface IANode {
