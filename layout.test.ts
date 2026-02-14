@@ -244,3 +244,68 @@ test("overall layout dimensions encompass all nodes", () => {
   expect(result.width).toBeGreaterThan(0);
   expect(result.height).toBeGreaterThan(0);
 });
+
+test("reorders nodes to reduce edge crossings", () => {
+  // A links to D, B links to C — if kept in order A B C D,
+  // edges would cross. Reordering should place linked nodes adjacent.
+  const diagram: IADiagram = {
+    siteName: "Test",
+    nodes: [
+      {
+        name: "A",
+        isPageStack: false,
+        children: [],
+        links: [{ target: "D" }],
+        components: [],
+      },
+      {
+        name: "B",
+        isPageStack: false,
+        children: [],
+        links: [{ target: "C" }],
+        components: [],
+      },
+      {
+        name: "C",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+      {
+        name: "D",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+      },
+    ],
+  };
+
+  const result = layout(diagram);
+
+  // Count edge crossings: two edges cross if their x-ranges overlap
+  // in opposite directions
+  let crossings = 0;
+  for (let i = 0; i < result.edges.length; i++) {
+    for (let j = i + 1; j < result.edges.length; j++) {
+      const e1 = result.edges[i];
+      const e2 = result.edges[j];
+      // Edges cross if one goes left-to-right and the other right-to-left
+      const e1Dir = e1.x2 - e1.x1;
+      const e2Dir = e2.x2 - e2.x1;
+      if ((e1Dir > 0 && e2Dir < 0) || (e1Dir < 0 && e2Dir > 0)) {
+        // Check if they actually cross (source/target ranges overlap)
+        const e1Left = Math.min(e1.x1, e1.x2);
+        const e1Right = Math.max(e1.x1, e1.x2);
+        const e2Left = Math.min(e2.x1, e2.x2);
+        const e2Right = Math.max(e2.x1, e2.x2);
+        if (e1Left < e2Right && e2Left < e1Right) {
+          crossings++;
+        }
+      }
+    }
+  }
+
+  expect(crossings).toBe(0);
+});
