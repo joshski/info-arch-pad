@@ -1,5 +1,5 @@
 import peggy from "peggy";
-import type { IADiagram } from "./model";
+import type { IADiagram, IANode } from "./model";
 
 const grammarSource = `
 {{
@@ -105,8 +105,45 @@ NL = "\\n" / !.
 
 const parser = peggy.generate(grammarSource);
 
+function collectNodeNames(nodes: IANode[]): Set<string> {
+  const names = new Set<string>();
+  for (const node of nodes) {
+    names.add(node.name);
+    for (const name of collectNodeNames(node.children)) {
+      names.add(name);
+    }
+  }
+  return names;
+}
+
+function validateLinkTargets(diagram: IADiagram): void {
+  const nodeNames = collectNodeNames(diagram.nodes);
+  const errors: string[] = [];
+
+  function checkNode(node: IANode): void {
+    for (const link of node.links) {
+      if (!link.url && !nodeNames.has(link.target)) {
+        errors.push(`Node "${node.name}" has a link to unknown target "${link.target}"`);
+      }
+    }
+    for (const child of node.children) {
+      checkNode(child);
+    }
+  }
+
+  for (const node of diagram.nodes) {
+    checkNode(node);
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"));
+  }
+}
+
 export function parse(input: string): IADiagram {
   // Ensure input ends with a newline for the grammar
   const normalized = input.endsWith("\n") ? input : input + "\n";
-  return parser.parse(normalized) as IADiagram;
+  const diagram = parser.parse(normalized) as IADiagram;
+  validateLinkTargets(diagram);
+  return diagram;
 }

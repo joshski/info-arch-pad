@@ -38,6 +38,7 @@ site MyApp
     --> about
   products /products
     --> home
+  about /about
 `);
   expect(result.nodes[0].links).toHaveLength(2);
   expect(result.nodes[0].links[0].target).toBe("products");
@@ -135,6 +136,70 @@ site MyApp
   expect(result.nodes[0].links).toHaveLength(2);
   expect(result.nodes[0].links[0].url).toBe("https://stripe.com/api");
   expect(result.nodes[0].links[1].url).toBe("https://example.com/webhook");
+});
+
+test("validates that link targets reference existing nodes", () => {
+  expect(() =>
+    parse(`
+site MyApp
+  home /
+    --> nonexistent
+  products /products
+`)
+  ).toThrow('Node "home" has a link to unknown target "nonexistent"');
+});
+
+test("reports multiple invalid link targets", () => {
+  expect(() =>
+    parse(`
+site MyApp
+  home /
+    --> ghost
+    --> phantom
+`)
+  ).toThrow('Node "home" has a link to unknown target "ghost"');
+});
+
+test("allows valid links without errors", () => {
+  const result = parse(`
+site MyApp
+  home /
+    --> products
+  products /products
+    --> home
+`);
+  expect(result.nodes[0].links[0].target).toBe("products");
+  expect(result.nodes[1].links[0].target).toBe("home");
+});
+
+test("allows diagrams with no links", () => {
+  const result = parse(`
+site MyApp
+  home /
+  about /about
+`);
+  expect(result.nodes[0].links).toEqual([]);
+  expect(result.nodes[1].links).toEqual([]);
+});
+
+test("does not validate external link targets as node names", () => {
+  const result = parse(`
+site MyApp
+  home /
+    ---> https://example.com
+`);
+  expect(result.nodes[0].links[0].url).toBe("https://example.com");
+});
+
+test("validates links to deeply nested nodes", () => {
+  const result = parse(`
+site MyApp
+  home /
+    --> detail
+  products /products
+    detail /products/:id
+`);
+  expect(result.nodes[0].links[0].target).toBe("detail");
 });
 
 test("nodes without paths or annotations have undefined for those fields", () => {
