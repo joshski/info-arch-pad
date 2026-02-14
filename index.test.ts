@@ -195,6 +195,42 @@ test("shows error for unknown format", async () => {
   await rm(dir, { recursive: true });
 });
 
+test("--watch re-renders when input file changes", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.svg");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--watch"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  // Wait for initial render
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const svg1 = await readFile(outputFile, "utf-8");
+  expect(svg1).toContain("<svg");
+  expect(svg1).toContain("home");
+
+  // Modify input file
+  const updatedIA = SAMPLE_IA.replace("home", "dashboard");
+  await writeFile(inputFile, updatedIA);
+
+  // Wait for re-render
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  const svg2 = await readFile(outputFile, "utf-8");
+  expect(svg2).toContain("dashboard");
+  expect(svg2).not.toContain("home");
+
+  // Check stderr for render messages
+  proc.kill();
+  const stderr = await new Response(proc.stderr).text();
+  expect(stderr).toContain("Rendered");
+  expect(stderr).toContain("Watching for changes");
+
+  await rm(dir, { recursive: true });
+});
+
 test("shows error for unknown theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
