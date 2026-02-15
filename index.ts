@@ -8,7 +8,7 @@ import type { Theme } from "./theme";
 const args = process.argv.slice(2);
 
 function printUsage() {
-  console.error("Usage: bun run index.ts <input-file> [--output <file>] [--theme <name>] [--format svg|png] [--watch]");
+  console.error("Usage: bun run index.ts <input-file> [--output <file>] [--theme <name>] [--format svg|png|html] [--watch]");
 }
 
 if (args.length === 0) {
@@ -43,9 +43,107 @@ if (!theme) {
   process.exit(1);
 }
 
-if (format !== "svg" && format !== "png") {
-  console.error(`Error: Unknown format "${format}". Available formats: svg, png`);
+if (format !== "svg" && format !== "png" && format !== "html") {
+  console.error(`Error: Unknown format "${format}". Available formats: svg, png, html`);
   process.exit(1);
+}
+
+function wrapSvgInHtml(svg: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Information Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #f0f0f0; }
+  #container {
+    width: 100%; height: 100%;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #container.grabbing { cursor: grabbing; }
+  #diagram {
+    transform-origin: 0 0;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="diagram">
+    ${svg}
+  </div>
+</div>
+<script>
+(function() {
+  const container = document.getElementById('container');
+  const diagram = document.getElementById('diagram');
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+  let isPanning = false;
+  let startX = 0;
+  let startY = 0;
+
+  function fitToViewport() {
+    const svgEl = diagram.querySelector('svg');
+    if (!svgEl) return;
+    const svgW = svgEl.getAttribute('width') || svgEl.viewBox.baseVal.width;
+    const svgH = svgEl.getAttribute('height') || svgEl.viewBox.baseVal.height;
+    const cW = container.clientWidth;
+    const cH = container.clientHeight;
+    const padding = 40;
+    scale = Math.min((cW - padding) / svgW, (cH - padding) / svgH, 1);
+    translateX = (cW - svgW * scale) / 2;
+    translateY = (cH - svgH * scale) / 2;
+    applyTransform();
+  }
+
+  function applyTransform() {
+    diagram.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+  }
+
+  container.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const prevScale = scale;
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale *= delta;
+    scale = Math.max(0.1, Math.min(scale, 10));
+    translateX = mouseX - (mouseX - translateX) * (scale / prevScale);
+    translateY = mouseY - (mouseY - translateY) * (scale / prevScale);
+    applyTransform();
+  }, { passive: false });
+
+  container.addEventListener('mousedown', function(e) {
+    isPanning = true;
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
+    container.classList.add('grabbing');
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (!isPanning) return;
+    translateX = e.clientX - startX;
+    translateY = e.clientY - startY;
+    applyTransform();
+  });
+
+  window.addEventListener('mouseup', function() {
+    isPanning = false;
+    container.classList.remove('grabbing');
+  });
+
+  fitToViewport();
+})();
+</script>
+</body>
+</html>`;
 }
 
 async function renderFile(inputFile: string, outputFile: string | undefined, format: string, theme: Theme): Promise<boolean> {
@@ -86,6 +184,13 @@ async function renderFile(inputFile: string, outputFile: string | undefined, for
       writeFileSync(outputFile, pngBuffer);
     } else {
       process.stdout.write(pngBuffer);
+    }
+  } else if (format === "html") {
+    const html = wrapSvgInHtml(svg);
+    if (outputFile) {
+      writeFileSync(outputFile, html, "utf-8");
+    } else {
+      process.stdout.write(html);
     }
   } else {
     if (outputFile) {

@@ -231,6 +231,92 @@ test("--watch re-renders when input file changes", async () => {
   await rm(dir, { recursive: true });
 });
 
+test("outputs HTML to stdout with --format html", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--format", "html"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = await new Response(proc.stdout).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain("<!DOCTYPE html>");
+  expect(stdout).toContain("<svg");
+  expect(stdout).toContain("</svg>");
+  expect(stdout).toContain("home");
+  expect(stdout).toContain("products");
+
+  await rm(dir, { recursive: true });
+});
+
+test("HTML output is self-contained with pan and zoom", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--format", "html"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = await new Response(proc.stdout).text();
+  await proc.exited;
+
+  // Self-contained: has inline styles and script, no external dependencies
+  expect(stdout).toContain("<style>");
+  expect(stdout).toContain("<script>");
+  // Pan and zoom: wheel event for zoom, mousedown for pan
+  expect(stdout).toContain("wheel");
+  expect(stdout).toContain("mousedown");
+  expect(stdout).toContain("scale");
+  // No external links
+  expect(stdout).not.toMatch(/<link[^>]+href="http/);
+  expect(stdout).not.toMatch(/<script[^>]+src="http/);
+
+  await rm(dir, { recursive: true });
+});
+
+test("writes HTML to file with --format html --output", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.html");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--format", "html"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const exitCode = await proc.exited;
+
+  expect(exitCode).toBe(0);
+  const html = await readFile(outputFile, "utf-8");
+  expect(html).toContain("<!DOCTYPE html>");
+  expect(html).toContain("<svg");
+
+  await rm(dir, { recursive: true });
+});
+
+test("HTML output centers diagram and fits viewport", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--format", "html"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = await new Response(proc.stdout).text();
+  await proc.exited;
+
+  // fitToViewport function centers the diagram on load
+  expect(stdout).toContain("fitToViewport");
+
+  await rm(dir, { recursive: true });
+});
+
 test("shows error for unknown theme", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
