@@ -4,16 +4,63 @@ import { layout } from "./layout";
 import { render } from "./renderer";
 import { themes } from "./theme";
 import type { Theme } from "./theme";
+import { crawl, pagesToIa } from "./crawl";
 
 const args = process.argv.slice(2);
 
 function printUsage() {
   console.error("Usage: bun run index.ts <input-file> [--output <file>] [--theme <name>] [--format svg|png|html] [--watch]");
+  console.error("       bun run index.ts crawl <url> [--max-pages <n>] [--output <file>]");
 }
 
 if (args.length === 0) {
   printUsage();
   process.exit(1);
+}
+
+if (args[0] === "crawl") {
+  const crawlUrl = args[1];
+  if (!crawlUrl) {
+    console.error("Error: crawl requires a URL argument");
+    console.error("Usage: bun run index.ts crawl <url> [--max-pages <n>] [--output <file>]");
+    process.exit(1);
+  }
+
+  let maxPages = 50;
+  let crawlOutputFile: string | undefined;
+  for (let i = 2; i < args.length; i++) {
+    if (args[i] === "--max-pages" && i + 1 < args.length) {
+      maxPages = parseInt(args[i + 1], 10);
+      i++;
+    } else if (args[i] === "--output" && i + 1 < args.length) {
+      crawlOutputFile = args[i + 1];
+      i++;
+    }
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(crawlUrl);
+  } catch {
+    console.error(`Error: Invalid URL "${crawlUrl}"`);
+    process.exit(1);
+  }
+
+  const pages = await crawl(crawlUrl, { maxPages });
+  if (pages.length === 0) {
+    console.error("Error: No pages were crawled");
+    process.exit(1);
+  }
+
+  const siteName = parsedUrl.hostname.replace(/\./g, "-");
+  const ia = pagesToIa(pages, siteName);
+
+  if (crawlOutputFile) {
+    writeFileSync(crawlOutputFile, ia, "utf-8");
+  } else {
+    process.stdout.write(ia);
+  }
+  process.exit(0);
 }
 
 const inputFile = args[0];
