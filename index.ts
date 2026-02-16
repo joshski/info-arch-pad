@@ -5,12 +5,14 @@ import { render } from "./renderer";
 import { themes } from "./theme";
 import type { Theme } from "./theme";
 import { crawl, pagesToIa } from "./crawl";
+import { fetchSitemap, parseSitemapXml, sitemapToIa, siteNameFromXml } from "./sitemap";
 
 const args = process.argv.slice(2);
 
 function printUsage() {
   console.error("Usage: bun run index.ts <input-file> [--output <file>] [--theme <name>] [--format svg|png|html] [--watch]");
   console.error("       bun run index.ts crawl <url> [--max-pages <n>] [--output <file>]");
+  console.error("       bun run index.ts sitemap <url-or-file> [--output <file>]");
 }
 
 if (args.length === 0) {
@@ -57,6 +59,47 @@ if (args[0] === "crawl") {
 
   if (crawlOutputFile) {
     writeFileSync(crawlOutputFile, ia, "utf-8");
+  } else {
+    process.stdout.write(ia);
+  }
+  process.exit(0);
+}
+
+if (args[0] === "sitemap") {
+  const sitemapSource = args[1];
+  if (!sitemapSource) {
+    console.error("Error: sitemap requires a URL or file argument");
+    console.error("Usage: bun run index.ts sitemap <url-or-file> [--output <file>]");
+    process.exit(1);
+  }
+
+  let sitemapOutputFile: string | undefined;
+  for (let i = 2; i < args.length; i++) {
+    if (args[i] === "--output" && i + 1 < args.length) {
+      sitemapOutputFile = args[i + 1];
+      i++;
+    }
+  }
+
+  let xml: string;
+  try {
+    xml = await fetchSitemap(sitemapSource);
+  } catch (e: any) {
+    console.error(`Error: ${e.message}`);
+    process.exit(1);
+  }
+
+  const entries = parseSitemapXml(xml);
+  if (entries.length === 0) {
+    console.error("Error: No URLs found in sitemap");
+    process.exit(1);
+  }
+
+  const siteName = siteNameFromXml(xml, sitemapSource);
+  const ia = sitemapToIa(entries, siteName);
+
+  if (sitemapOutputFile) {
+    writeFileSync(sitemapOutputFile, ia, "utf-8");
   } else {
     process.stdout.write(ia);
   }
