@@ -1,4 +1,4 @@
-import type { IADiagram, IANode } from "./model";
+import type { IADiagram, IANode, IASite } from "./model";
 
 export interface LayoutNode {
   name: string;
@@ -24,12 +24,22 @@ export interface LayoutEdge {
   url?: string;
 }
 
+export interface SiteLayout {
+  siteName: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  nodes: LayoutNode[];
+}
+
 export interface Layout {
   siteName: string;
   nodes: LayoutNode[];
   edges: LayoutEdge[];
   width: number;
   height: number;
+  siteLayouts: SiteLayout[];
 }
 
 const CHAR_WIDTH = 8;
@@ -39,6 +49,8 @@ const LINE_HEIGHT = 16;
 const SIBLING_GAP = 30;
 const LEVEL_GAP = 60;
 const SECTION_PADDING = 20;
+const SITE_GAP = 60;
+const SITE_LABEL_HEIGHT = 30;
 
 function textWidth(text: string): number {
   return text.length * CHAR_WIDTH;
@@ -293,27 +305,66 @@ function reorderToReduceCrossings(nodes: IANode[]): IANode[] {
   return placed;
 }
 
-export function layout(diagram: IADiagram): Layout {
-  const orderedNodes = reorderToReduceCrossings(diagram.nodes);
+function layoutSite(site: IASite, offsetX: number, offsetY: number): { siteLayout: SiteLayout; allLayoutNodes: LayoutNode[] } {
+  const orderedNodes = reorderToReduceCrossings(site.nodes);
   const layoutNodes: LayoutNode[] = [];
-  let x = 0;
+  let x = offsetX;
 
   for (let i = 0; i < orderedNodes.length; i++) {
     if (i > 0) x += SIBLING_GAP;
-    const node = layoutSubtree(orderedNodes[i], x, 0);
+    const node = layoutSubtree(orderedNodes[i], x, offsetY);
     layoutNodes.push(node);
     x = node.x + node.width;
   }
 
-  const edges = collectEdges(
-    { name: "__root__", isPageStack: false, children: diagram.nodes, links: [], components: [], notes: [] },
-    layoutNodes
-  );
-
   const width = layoutNodes.length > 0
-    ? Math.max(...layoutNodes.map((n) => n.x + n.width))
+    ? Math.max(...layoutNodes.map((n) => n.x + n.width)) - offsetX
     : 0;
   const allNodes = layoutNodes.flatMap(collectNodes);
+  const height = allNodes.length > 0
+    ? Math.max(...allNodes.map((n) => n.y + n.height)) - offsetY
+    : 0;
+
+  return {
+    siteLayout: {
+      siteName: site.siteName,
+      x: offsetX,
+      y: offsetY,
+      width,
+      height,
+      nodes: layoutNodes,
+    },
+    allLayoutNodes: layoutNodes,
+  };
+}
+
+export function layout(diagram: IADiagram): Layout {
+  const sites = diagram.sites ?? [{ siteName: diagram.siteName, nodes: diagram.nodes }];
+  const isMultiSite = sites.length > 1;
+  const siteLayouts: SiteLayout[] = [];
+  const allLayoutNodes: LayoutNode[] = [];
+  let x = 0;
+
+  for (let i = 0; i < sites.length; i++) {
+    if (i > 0) x += SITE_GAP;
+    const nodeY = isMultiSite ? SITE_LABEL_HEIGHT : 0;
+    const result = layoutSite(sites[i], x, nodeY);
+    siteLayouts.push(result.siteLayout);
+    allLayoutNodes.push(...result.allLayoutNodes);
+    x += result.siteLayout.width;
+  }
+
+  // Collect edges across all sites' IA nodes, resolving against all layout nodes
+  const allIANodes: IANode[] = sites.flatMap((s) => s.nodes);
+  const edges = collectEdges(
+    { name: "__root__", isPageStack: false, children: allIANodes, links: [], components: [], notes: [] },
+    allLayoutNodes
+  );
+
+  const width = siteLayouts.length > 0
+    ? Math.max(...siteLayouts.map((s) => s.x + s.width))
+    : 0;
+  const allNodes = allLayoutNodes.flatMap(collectNodes);
   const nodeMaxHeight = allNodes.length > 0
     ? Math.max(...allNodes.map((n) => n.y + n.height))
     : 0;
@@ -324,9 +375,10 @@ export function layout(diagram: IADiagram): Layout {
 
   return {
     siteName: diagram.siteName,
-    nodes: layoutNodes,
+    nodes: allLayoutNodes,
     edges,
     width,
     height,
+    siteLayouts,
   };
 }

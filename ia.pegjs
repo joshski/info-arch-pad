@@ -42,7 +42,12 @@
   }
 }}
 
-diagram = blankLines siteDecl:siteLine lines:bodyLine* { return buildTree(siteDecl, lines); }
+diagram = blankLines sites:siteBlock+ {
+  const first = sites[0];
+  return { siteName: first.siteName, nodes: first.nodes, sites };
+}
+
+siteBlock = siteDecl:siteLine lines:bodyLine* blankLines { return buildTree(siteDecl, lines); }
 
 siteLine = "site" _ name:identifier trailingWs NL { return name; }
 

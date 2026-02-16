@@ -382,3 +382,117 @@ test("notes are visually distinct from other node text", () => {
   expect(svg).toContain(`fill="${defaultTheme.componentText}"`);
   expect(svg).toContain(`fill="${defaultTheme.nameText}"`);
 });
+
+test("renders site labels for multi-site diagrams", () => {
+  const diagram: IADiagram = {
+    siteName: "Current",
+    nodes: [],
+    sites: [
+      {
+        siteName: "Current",
+        nodes: [
+          {
+            name: "home",
+            path: "/",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+      {
+        siteName: "Proposed",
+        nodes: [
+          {
+            name: "dashboard",
+            path: "/dashboard",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+    ],
+  };
+
+  const positioned = layout(diagram);
+  const svg = render(positioned);
+
+  expect(svg).toContain("Current");
+  expect(svg).toContain("Proposed");
+  // Site labels should be rendered as bold text
+  expect(svg).toContain('font-weight="bold"');
+  // Both site node contents should appear
+  expect(svg).toContain("home");
+  expect(svg).toContain("dashboard");
+});
+
+test("does not render site label for single-site diagrams", () => {
+  const svg = renderDiagram({
+    siteName: "OnlySite",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  });
+
+  // The site name should NOT appear as a label in single-site mode
+  // (only node names should be in the SVG)
+  const siteNameMatches = svg.match(/OnlySite/g);
+  expect(siteNameMatches).toBeNull();
+});
+
+test("renders cross-site edges", () => {
+  const diagram: IADiagram = {
+    siteName: "SiteA",
+    nodes: [],
+    sites: [
+      {
+        siteName: "SiteA",
+        nodes: [
+          {
+            name: "home",
+            path: "/",
+            isPageStack: false,
+            children: [],
+            links: [{ target: "products" }],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+      {
+        siteName: "SiteB",
+        nodes: [
+          {
+            name: "products",
+            path: "/products",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+    ],
+  };
+
+  const positioned = layout(diagram);
+  const svg = render(positioned);
+
+  // Should have an edge (path with arrowhead)
+  expect(svg).toContain("<path");
+  expect(svg).toContain('marker-end="url(#arrowhead)"');
+});

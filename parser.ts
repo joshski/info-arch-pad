@@ -1,5 +1,5 @@
 import peggy from "peggy";
-import type { IADiagram, IANode } from "./model";
+import type { IADiagram, IANode, IASite } from "./model";
 
 const grammarSource = `
 {{
@@ -46,7 +46,12 @@ const grammarSource = `
   }
 }}
 
-diagram = blankLines siteDecl:siteLine lines:bodyLine* { return buildTree(siteDecl, lines); }
+diagram = blankLines sites:siteBlock+ {
+  const first = sites[0];
+  return { siteName: first.siteName, nodes: first.nodes, sites };
+}
+
+siteBlock = siteDecl:siteLine lines:bodyLine* blankLines { return buildTree(siteDecl, lines); }
 
 siteLine = "site" _ name:identifier trailingWs NL { return name; }
 
@@ -126,12 +131,19 @@ function collectNodeNames(nodes: IANode[]): Set<string> {
 }
 
 function validateLinkTargets(diagram: IADiagram): void {
-  const nodeNames = collectNodeNames(diagram.nodes);
+  // Collect node names across all sites for cross-site link support
+  const allNodeNames = new Set<string>();
+  for (const site of diagram.sites) {
+    for (const name of collectNodeNames(site.nodes)) {
+      allNodeNames.add(name);
+    }
+  }
+
   const errors: string[] = [];
 
   function checkNode(node: IANode): void {
     for (const link of node.links) {
-      if (!link.url && !nodeNames.has(link.target)) {
+      if (!link.url && !allNodeNames.has(link.target)) {
         errors.push(`Node "${node.name}" has a link to unknown target "${link.target}"`);
       }
     }
@@ -140,8 +152,10 @@ function validateLinkTargets(diagram: IADiagram): void {
     }
   }
 
-  for (const node of diagram.nodes) {
-    checkNode(node);
+  for (const site of diagram.sites) {
+    for (const node of site.nodes) {
+      checkNode(node);
+    }
   }
 
   if (errors.length > 0) {

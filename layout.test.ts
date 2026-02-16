@@ -328,3 +328,132 @@ test("reorders nodes to reduce edge crossings", () => {
 
   expect(crossings).toBe(0);
 });
+
+test("positions multiple sites side by side", () => {
+  const diagram: IADiagram = {
+    siteName: "SiteA",
+    nodes: [],
+    sites: [
+      {
+        siteName: "SiteA",
+        nodes: [
+          {
+            name: "home",
+            path: "/",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+      {
+        siteName: "SiteB",
+        nodes: [
+          {
+            name: "dashboard",
+            path: "/dashboard",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+    ],
+  };
+
+  const result = layout(diagram);
+  expect(result.siteLayouts).toHaveLength(2);
+  expect(result.siteLayouts[0].siteName).toBe("SiteA");
+  expect(result.siteLayouts[1].siteName).toBe("SiteB");
+  // Second site should be positioned to the right of the first
+  expect(result.siteLayouts[1].x).toBeGreaterThan(result.siteLayouts[0].x + result.siteLayouts[0].width);
+});
+
+test("generates cross-site edges", () => {
+  const diagram: IADiagram = {
+    siteName: "SiteA",
+    nodes: [],
+    sites: [
+      {
+        siteName: "SiteA",
+        nodes: [
+          {
+            name: "home",
+            path: "/",
+            isPageStack: false,
+            children: [],
+            links: [{ target: "dashboard" }],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+      {
+        siteName: "SiteB",
+        nodes: [
+          {
+            name: "dashboard",
+            path: "/dashboard",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+    ],
+  };
+
+  const result = layout(diagram);
+  expect(result.edges).toHaveLength(1);
+  expect(result.edges[0].fromNode).toBe("home");
+  expect(result.edges[0].toNode).toBe("dashboard");
+});
+
+test("multi-site layout offsets nodes vertically for site labels", () => {
+  const diagram: IADiagram = {
+    siteName: "SiteA",
+    nodes: [],
+    sites: [
+      {
+        siteName: "SiteA",
+        nodes: [
+          {
+            name: "home",
+            path: "/",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+      {
+        siteName: "SiteB",
+        nodes: [
+          {
+            name: "about",
+            path: "/about",
+            isPageStack: false,
+            children: [],
+            links: [],
+            components: [],
+            notes: [],
+          },
+        ],
+      },
+    ],
+  };
+
+  const result = layout(diagram);
+  // Multi-site nodes should be offset down to make room for site labels
+  for (const node of result.nodes) {
+    expect(node.y).toBeGreaterThan(0);
+  }
+});

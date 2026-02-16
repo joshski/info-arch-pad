@@ -242,3 +242,58 @@ site MyApp
   expect(result.nodes[0].notes).toEqual(["Primary entry point"]);
   expect(result.nodes[0].links).toHaveLength(1);
 });
+
+test("parses multiple site blocks", () => {
+  const result = parse(`
+site Current
+  home /
+  about /about
+
+site Proposed
+  home /
+  products /products
+`);
+  expect(result.sites).toHaveLength(2);
+  expect(result.sites[0].siteName).toBe("Current");
+  expect(result.sites[0].nodes).toHaveLength(2);
+  expect(result.sites[1].siteName).toBe("Proposed");
+  expect(result.sites[1].nodes).toHaveLength(2);
+  // backward compat: siteName and nodes reflect first site
+  expect(result.siteName).toBe("Current");
+  expect(result.nodes).toHaveLength(2);
+});
+
+test("single site populates sites array", () => {
+  const result = parse(`
+site MyApp
+  home /
+`);
+  expect(result.sites).toHaveLength(1);
+  expect(result.sites[0].siteName).toBe("MyApp");
+  expect(result.sites[0].nodes).toHaveLength(1);
+});
+
+test("validates cross-site links", () => {
+  const result = parse(`
+site SiteA
+  home /
+    --> products
+
+site SiteB
+  products /products
+`);
+  expect(result.sites[0].nodes[0].links[0].target).toBe("products");
+});
+
+test("rejects invalid cross-site link targets", () => {
+  expect(() =>
+    parse(`
+site SiteA
+  home /
+    --> nonexistent
+
+site SiteB
+  products /products
+`)
+  ).toThrow('Node "home" has a link to unknown target "nonexistent"');
+});

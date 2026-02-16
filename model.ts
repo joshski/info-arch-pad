@@ -14,7 +14,13 @@ export interface IANode {
   notes: string[];
 }
 
+export interface IASite {
+  siteName: string;
+  nodes: IANode[];
+}
+
 export interface IADiagram {
   siteName: string;
   nodes: IANode[];
+  sites: IASite[];
 }

@@ -1,4 +1,4 @@
-import type { Layout, LayoutNode, LayoutEdge } from "./layout";
+import type { Layout, LayoutNode, LayoutEdge, SiteLayout } from "./layout";
 import type { Theme } from "./theme";
 import { defaultTheme } from "./theme";
 
@@ -10,6 +10,7 @@ const SMALL_FONT_SIZE = 11;
 const LINE_HEIGHT = 16;
 const NODE_PADDING_Y = 10;
 const NODE_PADDING_X = 12;
+const SITE_LABEL_FONT_SIZE = 15;
 
 function escapeXml(text: string): string {
   return text
@@ -176,6 +177,14 @@ export function render(layoutResult: Layout, theme: Theme = defaultTheme): strin
   );
   parts.push(`</defs>`);
   parts.push(`<g transform="translate(${SVG_PADDING}, ${SVG_PADDING})">`);
+
+  if (layoutResult.siteLayouts.length > 1) {
+    for (const site of layoutResult.siteLayouts) {
+      parts.push(
+        `<text x="${site.x + site.width / 2}" y="${SITE_LABEL_FONT_SIZE}" font-family="sans-serif" font-size="${SITE_LABEL_FONT_SIZE}" font-weight="bold" fill="${theme.nameText}" text-anchor="middle">${escapeXml(site.siteName)}</text>`
+      );
+    }
+  }
 
   for (const node of layoutResult.nodes) {
     parts.push(renderNode(node, theme));
