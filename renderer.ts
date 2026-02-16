@@ -36,6 +36,14 @@ function renderRect(
 
 function renderLeafNode(node: LayoutNode, theme: Theme): string {
   const parts: string[] = [];
+  const statusStyle = node.status ? theme.statusStyles[node.status] : undefined;
+  const nodeFill = statusStyle?.nodeFill ?? theme.nodeFill;
+  const nodeOpacity = statusStyle?.nodeOpacity;
+
+  const wrapOpacity = nodeOpacity !== undefined && nodeOpacity !== 1.0;
+  if (wrapOpacity) {
+    parts.push(`<g opacity="${nodeOpacity}">`);
+  }
 
   if (node.isPageStack) {
     parts.push(
@@ -59,7 +67,7 @@ function renderLeafNode(node: LayoutNode, theme: Theme): string {
   }
 
   parts.push(renderRect(node.x, node.y, node.width, node.height, {
-    fill: theme.nodeFill,
+    fill: nodeFill,
     stroke: theme.nodeStroke,
   }));
 
@@ -100,6 +108,10 @@ function renderLeafNode(node: LayoutNode, theme: Theme): string {
     parts.push(
       `<text x="${lineX + 6}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.noteText}" font-style="italic">${escapeXml(note)}</text>`
     );
+  }
+
+  if (wrapOpacity) {
+    parts.push(`</g>`);
   }
 
   return parts.join("\n");

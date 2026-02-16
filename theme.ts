@@ -1,3 +1,8 @@
+export interface StatusStyle {
+  nodeFill: string;
+  nodeOpacity: number;
+}
+
 export interface Theme {
   nodeFill: string;
   nodeStroke: string;
@@ -12,6 +17,7 @@ export interface Theme {
   noteText: string;
   noteBorder: string;
   edgeStroke: string;
+  statusStyles: Record<string, StatusStyle>;
 }
 
 export const defaultTheme: Theme = {
@@ -28,6 +34,11 @@ export const defaultTheme: Theme = {
   noteText: "#b58900",
   noteBorder: "#ddb62b",
   edgeStroke: "#666",
+  statusStyles: {
+    draft: { nodeFill: "#fff3cd", nodeOpacity: 0.7 },
+    live: { nodeFill: "#d4edda", nodeOpacity: 1.0 },
+    archived: { nodeFill: "#e2e3e5", nodeOpacity: 0.5 },
+  },
 };
 
 export const darkTheme: Theme = {
@@ -44,6 +55,11 @@ export const darkTheme: Theme = {
   noteText: "#f9e2af",
   noteBorder: "#f9e2af",
   edgeStroke: "#a6adc8",
+  statusStyles: {
+    draft: { nodeFill: "#45403d", nodeOpacity: 0.7 },
+    live: { nodeFill: "#2d3a2e", nodeOpacity: 1.0 },
+    archived: { nodeFill: "#2a2a3a", nodeOpacity: 0.5 },
+  },
 };
 
 export const themes: Record<string, Theme> = {

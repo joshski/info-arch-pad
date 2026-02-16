@@ -7,6 +7,7 @@ export interface IANode {
   name: string;
   path?: string;
   annotation?: string;
+  status?: string;
   isPageStack: boolean;
   children: IANode[];
   links: IALink[];

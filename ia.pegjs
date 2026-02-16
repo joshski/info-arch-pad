@@ -65,7 +65,7 @@ indent = spaces:$" "+ { return spaces.length; }
 
 lineEntry = externalLink / link / note / component / node
 
-node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation { return a; })? {
+node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation { return a; })? status:(_ s:status { return s; })? {
   const hasParam = path ? /:/.test(path) : false;
   return {
     type: 'node',
@@ -73,6 +73,7 @@ node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation
       name,
       path: path || undefined,
       annotation: annotation || undefined,
+      status: status || undefined,
       isPageStack: hasParam,
       children: [],
       links: [],
@@ -103,6 +104,8 @@ component = "[" name:$[^\]]+ "]" {
 path = $("/" [a-zA-Z0-9_/:.-]*)
 
 annotation = "(" text:$[^)]+ ")" { return text.trim(); }
+
+status = "{" text:$[^}]+ "}" { return text.trim(); }
 
 identifier = $[a-zA-Z0-9_-]+
 

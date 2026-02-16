@@ -297,3 +297,41 @@ site SiteB
 `)
   ).toThrow('Node "home" has a link to unknown target "nonexistent"');
 });
+
+test("parses status markers on nodes", () => {
+  const result = parse(`
+site MyApp
+  home / {live}
+  about /about {draft}
+  old-page /old {archived}
+`);
+  expect(result.nodes[0].status).toBe("live");
+  expect(result.nodes[1].status).toBe("draft");
+  expect(result.nodes[2].status).toBe("archived");
+});
+
+test("parses status with annotation", () => {
+  const result = parse(`
+site MyApp
+  home / (landing-page) {live}
+`);
+  expect(result.nodes[0].annotation).toBe("landing-page");
+  expect(result.nodes[0].status).toBe("live");
+});
+
+test("nodes without status have undefined status", () => {
+  const result = parse(`
+site MyApp
+  home /
+`);
+  expect(result.nodes[0].status).toBeUndefined();
+});
+
+test("parses status on nodes without path", () => {
+  const result = parse(`
+site MyApp
+  dashboard {draft}
+`);
+  expect(result.nodes[0].name).toBe("dashboard");
+  expect(result.nodes[0].status).toBe("draft");
+});

@@ -496,3 +496,88 @@ test("renders cross-site edges", () => {
   expect(svg).toContain("<path");
   expect(svg).toContain('marker-end="url(#arrowhead)"');
 });
+
+test("renders draft status with distinct fill and reduced opacity", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "planned",
+        path: "/planned",
+        status: "draft",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain(`fill="${defaultTheme.statusStyles.draft.nodeFill}"`);
+  expect(svg).toContain(`opacity="${defaultTheme.statusStyles.draft.nodeOpacity}"`);
+});
+
+test("renders live status with distinct fill and full opacity", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "active",
+        path: "/active",
+        status: "live",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain(`fill="${defaultTheme.statusStyles.live.nodeFill}"`);
+  // Full opacity should not wrap in a group
+  expect(svg).not.toContain('opacity=');
+});
+
+test("renders archived status with distinct fill and reduced opacity", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "old",
+        path: "/old",
+        status: "archived",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain(`fill="${defaultTheme.statusStyles.archived.nodeFill}"`);
+  expect(svg).toContain(`opacity="${defaultTheme.statusStyles.archived.nodeOpacity}"`);
+});
+
+test("nodes without status use default fill", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "normal",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  });
+
+  expect(svg).toContain(`fill="${defaultTheme.nodeFill}"`);
+  expect(svg).not.toContain('opacity=');
+});
+

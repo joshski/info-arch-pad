@@ -4,6 +4,7 @@ export interface LayoutNode {
   name: string;
   path?: string;
   annotation?: string;
+  status?: string;
   isPageStack: boolean;
   components: string[];
   notes: string[];
@@ -92,6 +93,7 @@ function layoutSubtree(node: IANode, x: number, y: number): LayoutNode {
       name: node.name,
       path: node.path,
       annotation: node.annotation,
+      status: node.status,
       isPageStack: node.isPageStack,
       components: node.components,
       notes: node.notes,
@@ -133,6 +135,7 @@ function layoutSubtree(node: IANode, x: number, y: number): LayoutNode {
     name: node.name,
     path: node.path,
     annotation: node.annotation,
+    status: node.status,
     isPageStack: node.isPageStack,
     components: node.components,
     notes: node.notes,
