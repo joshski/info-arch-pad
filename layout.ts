@@ -6,6 +6,7 @@ export interface LayoutNode {
   annotation?: string;
   isPageStack: boolean;
   components: string[];
+  notes: string[];
   x: number;
   y: number;
   width: number;
@@ -54,6 +55,9 @@ function nodeContentWidth(node: IANode): number {
   for (const comp of node.components) {
     maxWidth = Math.max(maxWidth, textWidth(`[${comp}]`));
   }
+  for (const note of node.notes) {
+    maxWidth = Math.max(maxWidth, textWidth(note));
+  }
   return maxWidth + NODE_PADDING_X * 2;
 }
 
@@ -62,6 +66,7 @@ function nodeContentHeight(node: IANode): number {
   if (node.path) lines++;
   if (node.annotation) lines++;
   lines += node.components.length;
+  lines += node.notes.length;
   return lines * LINE_HEIGHT + NODE_PADDING_Y * 2;
 }
 
@@ -77,6 +82,7 @@ function layoutSubtree(node: IANode, x: number, y: number): LayoutNode {
       annotation: node.annotation,
       isPageStack: node.isPageStack,
       components: node.components,
+      notes: node.notes,
       x,
       y,
       width: selfWidth,
@@ -117,6 +123,7 @@ function layoutSubtree(node: IANode, x: number, y: number): LayoutNode {
     annotation: node.annotation,
     isPageStack: node.isPageStack,
     components: node.components,
+    notes: node.notes,
     x,
     y,
     width: sectionWidth,
@@ -299,7 +306,7 @@ export function layout(diagram: IADiagram): Layout {
   }
 
   const edges = collectEdges(
-    { name: "__root__", isPageStack: false, children: diagram.nodes, links: [], components: [] },
+    { name: "__root__", isPageStack: false, children: diagram.nodes, links: [], components: [], notes: [] },
     layoutNodes
   );
 

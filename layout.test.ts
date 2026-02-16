@@ -13,6 +13,7 @@ test("lays out a single node", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -39,6 +40,7 @@ test("positions siblings horizontally", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
       {
         name: "about",
@@ -47,6 +49,7 @@ test("positions siblings horizontally", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -73,10 +76,12 @@ test("positions children below parents", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
         ],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -102,6 +107,7 @@ test("parent section has bounding box around children", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
           {
             name: "contact",
@@ -110,10 +116,12 @@ test("parent section has bounding box around children", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
         ],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -140,6 +148,7 @@ test("generates edges for navigation links", () => {
         children: [],
         links: [{ target: "about" }],
         components: [],
+        notes: [],
       },
       {
         name: "about",
@@ -148,6 +157,7 @@ test("generates edges for navigation links", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -186,6 +196,7 @@ test("accounts for components in node height", () => {
         children: [],
         links: [],
         components: ["hero", "featured"],
+        notes: [],
       },
     ],
   };
@@ -199,6 +210,7 @@ test("accounts for components in node height", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -219,6 +231,7 @@ test("overall layout dimensions encompass all nodes", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
       {
         name: "products",
@@ -232,10 +245,12 @@ test("overall layout dimensions encompass all nodes", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
         ],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -257,6 +272,7 @@ test("reorders nodes to reduce edge crossings", () => {
         children: [],
         links: [{ target: "D" }],
         components: [],
+        notes: [],
       },
       {
         name: "B",
@@ -264,6 +280,7 @@ test("reorders nodes to reduce edge crossings", () => {
         children: [],
         links: [{ target: "C" }],
         components: [],
+        notes: [],
       },
       {
         name: "C",
@@ -271,6 +288,7 @@ test("reorders nodes to reduce edge crossings", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
       {
         name: "D",
@@ -278,6 +296,7 @@ test("reorders nodes to reduce edge crossings", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };

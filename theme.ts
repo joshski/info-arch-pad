@@ -9,6 +9,8 @@ export interface Theme {
   pathText: string;
   annotationText: string;
   componentText: string;
+  noteText: string;
+  noteBorder: string;
   edgeStroke: string;
 }
 
@@ -23,6 +25,8 @@ export const defaultTheme: Theme = {
   pathText: "#666",
   annotationText: "#999",
   componentText: "#888",
+  noteText: "#b58900",
+  noteBorder: "#ddb62b",
   edgeStroke: "#666",
 };
 
@@ -37,6 +41,8 @@ export const darkTheme: Theme = {
   pathText: "#a6adc8",
   annotationText: "#7f849c",
   componentText: "#9399b2",
+  noteText: "#f9e2af",
+  noteBorder: "#f9e2af",
   edgeStroke: "#a6adc8",
 };
 

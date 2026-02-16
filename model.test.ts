@@ -15,6 +15,7 @@ test("IANode represents a page with all properties", () => {
     children: [],
     links: [{ target: "home" }],
     components: ["gallery", "specs"],
+    notes: [],
   };
   expect(node.name).toBe("product-detail");
   expect(node.path).toBe("/products/:id");
@@ -31,6 +32,7 @@ test("IANode works with minimal properties", () => {
     children: [],
     links: [],
     components: [],
+    notes: [],
   };
   expect(node.name).toBe("home");
   expect(node.path).toBeUndefined();
@@ -44,6 +46,7 @@ test("IANode supports nested children", () => {
     children: [],
     links: [],
     components: [],
+    notes: [],
   };
   const parent: IANode = {
     name: "about",
@@ -52,6 +55,7 @@ test("IANode supports nested children", () => {
     children: [child],
     links: [],
     components: [],
+    notes: [],
   };
   expect(parent.children).toHaveLength(1);
   expect(parent.children[0].name).toBe("team");
@@ -68,6 +72,7 @@ test("IADiagram is the root container", () => {
         children: [],
         links: [{ target: "products" }],
         components: [],
+        notes: [],
       },
       {
         name: "products",
@@ -81,10 +86,12 @@ test("IADiagram is the root container", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
         ],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   };
@@ -101,6 +108,7 @@ test("dynamic routes with :param are flagged as page stacks", () => {
     children: [],
     links: [],
     components: [],
+    notes: [],
   };
   expect(node.isPageStack).toBe(true);
 
@@ -111,6 +119,7 @@ test("dynamic routes with :param are flagged as page stacks", () => {
     children: [],
     links: [],
     components: [],
+    notes: [],
   };
   expect(staticNode.isPageStack).toBe(false);
 });

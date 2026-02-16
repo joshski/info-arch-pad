@@ -88,6 +88,19 @@ function renderLeafNode(node: LayoutNode, theme: Theme): string {
     );
   }
 
+  for (const note of node.notes) {
+    textY += LINE_HEIGHT;
+    const lineX = node.x + NODE_PADDING_X;
+    const lineY1 = textY - FONT_SIZE + 2;
+    const lineY2 = textY + 2;
+    parts.push(
+      `<line x1="${lineX}" y1="${lineY1}" x2="${lineX}" y2="${lineY2}" stroke="${theme.noteBorder}" stroke-width="2"/>`
+    );
+    parts.push(
+      `<text x="${lineX + 6}" y="${textY}" font-family="sans-serif" font-size="${SMALL_FONT_SIZE}" fill="${theme.noteText}" font-style="italic">${escapeXml(note)}</text>`
+    );
+  }
+
   return parts.join("\n");
 }
 

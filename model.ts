@@ -11,6 +11,7 @@ export interface IANode {
   children: IANode[];
   links: IALink[];
   components: string[];
+  notes: string[];
 }
 
 export interface IADiagram {

@@ -19,6 +19,7 @@ test("produces valid SVG document", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -39,6 +40,7 @@ test("renders pages as rounded rectangles", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -58,6 +60,7 @@ test("renders page stacks as stacked rectangles", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -78,6 +81,7 @@ test("renders labels and paths on nodes", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -97,6 +101,7 @@ test("renders navigation arrows with arrowheads", () => {
         children: [],
         links: [{ target: "about" }],
         components: [],
+        notes: [],
       },
       {
         name: "about",
@@ -105,6 +110,7 @@ test("renders navigation arrows with arrowheads", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -130,10 +136,12 @@ test("renders section bounding boxes for nodes with children", () => {
             children: [],
             links: [],
             components: [],
+            notes: [],
           },
         ],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -156,6 +164,7 @@ test("renders components in nodes", () => {
         children: [],
         links: [],
         components: ["hero", "featured-products"],
+        notes: [],
       },
     ],
   });
@@ -175,6 +184,7 @@ test("renders edges as bezier curves", () => {
         children: [],
         links: [{ target: "about" }],
         components: [],
+        notes: [],
       },
       {
         name: "about",
@@ -183,6 +193,7 @@ test("renders edges as bezier curves", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -203,6 +214,7 @@ test("escapes special XML characters", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -222,6 +234,7 @@ test("uses default theme colors when no theme specified", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -241,6 +254,7 @@ test("renders with dark theme colors", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -263,6 +277,7 @@ test("dark theme applies to edges", () => {
         children: [],
         links: [{ target: "about" }],
         components: [],
+        notes: [],
       },
       {
         name: "about",
@@ -271,6 +286,7 @@ test("dark theme applies to edges", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -291,6 +307,7 @@ test("dark theme applies to page stacks", () => {
         children: [],
         links: [],
         components: [],
+        notes: [],
       },
     ],
   });
@@ -311,10 +328,57 @@ test("renders external links as dashed arrows with URL label", () => {
         children: [],
         links: [{ target: "https://stripe.com/api", url: "https://stripe.com/api" }],
         components: [],
+        notes: [],
       },
     ],
   });
 
   expect(svg).toContain('stroke-dasharray="6 3"');
   expect(svg).toContain("https://stripe.com/api");
+});
+
+test("renders notes as callouts with left border", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: ["Primary entry point"],
+      },
+    ],
+  });
+
+  expect(svg).toContain("Primary entry point");
+  expect(svg).toContain("font-style=\"italic\"");
+  expect(svg).toContain("<line");
+  expect(svg).toContain(`fill="${defaultTheme.noteText}"`);
+});
+
+test("notes are visually distinct from other node text", () => {
+  const svg = renderDiagram({
+    siteName: "Test",
+    nodes: [
+      {
+        name: "home",
+        path: "/",
+        annotation: "landing",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: ["hero"],
+        notes: ["A note"],
+      },
+    ],
+  });
+
+  // Notes use noteText color, distinct from annotation, component, and name colors
+  expect(svg).toContain(`fill="${defaultTheme.noteText}"`);
+  expect(svg).toContain(`fill="${defaultTheme.annotationText}"`);
+  expect(svg).toContain(`fill="${defaultTheme.componentText}"`);
+  expect(svg).toContain(`fill="${defaultTheme.nameText}"`);
 });

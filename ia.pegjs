@@ -31,6 +31,10 @@
         if (parent !== root) {
           parent.components.push(entry.value);
         }
+      } else if (entry.type === 'note') {
+        if (parent !== root) {
+          parent.notes.push(entry.value);
+        }
       }
     }
 
@@ -54,7 +58,7 @@ indentedLine = indent:indent entry:lineEntry trailingWs NL {
 
 indent = spaces:$" "+ { return spaces.length; }
 
-lineEntry = externalLink / link / component / node
+lineEntry = externalLink / link / note / component / node
 
 node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation { return a; })? {
   const hasParam = path ? /:/.test(path) : false;
@@ -68,6 +72,7 @@ node = name:identifier path:(_ p:path { return p; })? annotation:(_ a:annotation
       children: [],
       links: [],
       components: [],
+      notes: [],
     }
   };
 }
@@ -78,6 +83,10 @@ externalLink = "--->" _ url:url {
 
 link = "-->" _ target:identifier {
   return { type: 'link', value: { target } };
+}
+
+note = "--" _ '"' text:$[^"]+ '"' {
+  return { type: 'note', value: text };
 }
 
 url = $("http" "s"? "://" [^ \t\n]+)

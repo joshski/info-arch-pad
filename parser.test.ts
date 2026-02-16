@@ -214,4 +214,31 @@ site MyApp
   expect(result.nodes[0].children).toEqual([]);
   expect(result.nodes[0].links).toEqual([]);
   expect(result.nodes[0].components).toEqual([]);
+  expect(result.nodes[0].notes).toEqual([]);
+});
+
+test("parses notes on page nodes", () => {
+  const result = parse(`
+site MyApp
+  home /
+    -- "This is the landing page"
+    -- "Needs hero section"
+`);
+  expect(result.nodes[0].notes).toHaveLength(2);
+  expect(result.nodes[0].notes[0]).toBe("This is the landing page");
+  expect(result.nodes[0].notes[1]).toBe("Needs hero section");
+});
+
+test("parses notes alongside components and links", () => {
+  const result = parse(`
+site MyApp
+  home /
+    [hero]
+    -- "Primary entry point"
+    --> about
+  about /about
+`);
+  expect(result.nodes[0].components).toEqual(["hero"]);
+  expect(result.nodes[0].notes).toEqual(["Primary entry point"]);
+  expect(result.nodes[0].links).toHaveLength(1);
 });
