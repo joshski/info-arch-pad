@@ -226,6 +226,34 @@ test("accounts for components in node height", () => {
   expect(withResult.nodes[0].height).toBeGreaterThan(withoutResult.nodes[0].height);
 });
 
+test("sizes equal-length labels differently for narrow and wide characters", () => {
+  const diagram: IADiagram = {
+    siteName: "Test",
+    nodes: [
+      {
+        name: "iiiiiiii",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+      {
+        name: "WWWWWWWW",
+        isPageStack: false,
+        children: [],
+        links: [],
+        components: [],
+        notes: [],
+      },
+    ],
+  };
+
+  const result = layout(diagram);
+
+  expect(result.nodes[1].width).toBeGreaterThan(result.nodes[0].width);
+});
+
 test("overall layout dimensions encompass all nodes", () => {
   const diagram: IADiagram = {
     siteName: "Test",

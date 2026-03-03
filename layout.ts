@@ -43,8 +43,10 @@ export interface Layout {
   siteLayouts: SiteLayout[];
 }
 
-const CHAR_WIDTH = 8;
-const NODE_PADDING_X = 20;
+const FONT_SIZE = 13;
+const SMALL_FONT_SIZE = 11;
+const BOLD_TEXT_SCALE = 1.06;
+const NODE_PADDING_X = 12;
 const NODE_PADDING_Y = 10;
 const LINE_HEIGHT = 16;
 const SIBLING_GAP = 30;
@@ -52,24 +54,45 @@ const LEVEL_GAP = 60;
 const SECTION_PADDING = 20;
 const SITE_GAP = 60;
 const SITE_LABEL_HEIGHT = 30;
+const NOTE_TEXT_OFFSET = 6;
 
-function textWidth(text: string): number {
-  return text.length * CHAR_WIDTH;
+function glyphWidth(char: string): number {
+  if (char === " ") return 0.33;
+  if (".,:;!'|`ijlIt[]()/\\".includes(char)) return 0.35;
+  if ("frtJ".includes(char)) return 0.45;
+  if ("mwMW@#%&QGO0".includes(char)) return 0.9;
+  if (/[A-Z]/.test(char)) return 0.72;
+  if (/[a-z]/.test(char)) return 0.56;
+  if (/[0-9]/.test(char)) return 0.6;
+  if ("-_$*+<>?~^\"=".includes(char)) return 0.56;
+  return 1.0;
+}
+
+function textWidth(text: string, fontSize: number, isBold = false): number {
+  const widthUnits = Array.from(text).reduce(
+    (sum, char) => sum + glyphWidth(char),
+    0
+  );
+  const boldScale = isBold ? BOLD_TEXT_SCALE : 1;
+  return Math.ceil(widthUnits * fontSize * boldScale);
 }
 
 function nodeContentWidth(node: IANode): number {
-  let maxWidth = textWidth(node.name);
+  let maxWidth = textWidth(node.name, FONT_SIZE, true);
   if (node.path) {
-    maxWidth = Math.max(maxWidth, textWidth(node.path));
+    maxWidth = Math.max(maxWidth, textWidth(node.path, SMALL_FONT_SIZE));
   }
   if (node.annotation) {
-    maxWidth = Math.max(maxWidth, textWidth(node.annotation));
+    maxWidth = Math.max(maxWidth, textWidth(node.annotation, SMALL_FONT_SIZE));
   }
   for (const comp of node.components) {
-    maxWidth = Math.max(maxWidth, textWidth(`[${comp}]`));
+    maxWidth = Math.max(maxWidth, textWidth(`[${comp}]`, SMALL_FONT_SIZE));
   }
   for (const note of node.notes) {
-    maxWidth = Math.max(maxWidth, textWidth(note));
+    maxWidth = Math.max(
+      maxWidth,
+      NOTE_TEXT_OFFSET + textWidth(note, SMALL_FONT_SIZE)
+    );
   }
   return maxWidth + NODE_PADDING_X * 2;
 }
