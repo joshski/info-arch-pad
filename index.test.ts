@@ -14,6 +14,10 @@ const SAMPLE_IA = `site MyApp
   about /about
 `;
 
+function waitFor(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 test("outputs SVG to stdout", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
@@ -177,6 +181,30 @@ test("PNG renders at 2x resolution", async () => {
   await rm(dir, { recursive: true });
 });
 
+test("shows error when PNG rendering fails", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.png");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--format", "png"], {
+    stdout: "pipe",
+    stderr: "pipe",
+    env: {
+      ...process.env,
+      INFO_ARCH_PAD_FORCE_PNG_FAILURE: "1",
+    },
+  });
+  const stderr = await new Response(proc.stderr).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain("Could not render PNG");
+  expect(stderr).toContain("Forced PNG render failure");
+
+  await rm(dir, { recursive: true });
+});
+
 test("shows error for unknown format", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
@@ -195,6 +223,25 @@ test("shows error for unknown format", async () => {
   await rm(dir, { recursive: true });
 });
 
+test("shows error when output file cannot be written", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "missing", "output.svg");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stderr = await new Response(proc.stderr).text();
+  const exitCode = await proc.exited;
+
+  expect(exitCode).not.toBe(0);
+  expect(stderr).toContain(`Could not write to file "${outputFile}"`);
+
+  await rm(dir, { recursive: true });
+});
+
 test("--watch re-renders when input file changes", async () => {
   const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
   const inputFile = join(dir, "test.ia");
@@ -207,7 +254,7 @@ test("--watch re-renders when input file changes", async () => {
   });
 
   // Wait for initial render
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await waitFor(500);
   const svg1 = await readFile(outputFile, "utf-8");
   expect(svg1).toContain("<svg");
   expect(svg1).toContain("home");
@@ -217,7 +264,7 @@ test("--watch re-renders when input file changes", async () => {
   await writeFile(inputFile, updatedIA);
 
   // Wait for re-render
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  await waitFor(500);
   const svg2 = await readFile(outputFile, "utf-8");
   expect(svg2).toContain("dashboard");
   expect(svg2).not.toContain("home");
@@ -227,6 +274,39 @@ test("--watch re-renders when input file changes", async () => {
   const stderr = await new Response(proc.stderr).text();
   expect(stderr).toContain("Rendered");
   expect(stderr).toContain("Watching for changes");
+
+  await rm(dir, { recursive: true });
+});
+
+test("--watch reports an error after the input file is deleted and keeps running", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "ia-test-"));
+  const inputFile = join(dir, "test.ia");
+  const outputFile = join(dir, "output.svg");
+  await writeFile(inputFile, SAMPLE_IA);
+
+  const proc = Bun.spawn(["bun", CLI, inputFile, "--output", outputFile, "--watch"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stderrPromise = new Response(proc.stderr).text();
+
+  await waitFor(500);
+  await rm(inputFile);
+  await waitFor(500);
+
+  const stateAfterDelete = await Promise.race([
+    proc.exited.then(() => "exited"),
+    waitFor(300).then(() => "running"),
+  ]);
+
+  expect(stateAfterDelete).toBe("running");
+
+  proc.kill();
+  await proc.exited;
+  const stderr = await stderrPromise;
+
+  expect(stderr).toContain("Watching for changes");
+  expect(stderr).toContain(`Could not read file "${inputFile}"`);
 
   await rm(dir, { recursive: true });
 });

@@ -236,6 +236,30 @@ function wrapSvgInHtml(svg: string): string {
 </html>`;
 }
 
+function writeOutput(
+  outputFile: string | undefined,
+  contents: string | Uint8Array,
+  encoding?: BufferEncoding,
+): boolean {
+  try {
+    if (outputFile) {
+      if (typeof contents === "string") {
+        writeFileSync(outputFile, contents, encoding);
+      } else {
+        writeFileSync(outputFile, contents);
+      }
+    } else {
+      process.stdout.write(contents);
+    }
+  } catch (e: any) {
+    const destination = outputFile ? `file "${outputFile}"` : "stdout";
+    console.error(`Error: Could not write to ${destination}: ${e.message}`);
+    return false;
+  }
+
+  return true;
+}
+
 async function renderFile(inputFile: string, outputFile: string | undefined, format: string, theme: Theme): Promise<boolean> {
   let source: string;
   try {
@@ -264,33 +288,28 @@ async function renderFile(inputFile: string, outputFile: string | undefined, for
   const svg = render(positioned, theme);
 
   if (format === "png") {
-    const { Resvg } = await import("@resvg/resvg-js");
-    const resvg = new Resvg(svg, {
-      fitTo: { mode: "zoom", value: 2 },
-    });
-    const pngData = resvg.render();
-    const pngBuffer = pngData.asPng();
-    if (outputFile) {
-      writeFileSync(outputFile, pngBuffer);
-    } else {
-      process.stdout.write(pngBuffer);
+    try {
+      if (process.env.INFO_ARCH_PAD_FORCE_PNG_FAILURE === "1") {
+        throw new Error("Forced PNG render failure");
+      }
+
+      const { Resvg } = await import("@resvg/resvg-js");
+      const resvg = new Resvg(svg, {
+        fitTo: { mode: "zoom", value: 2 },
+      });
+      const pngData = resvg.render();
+      const pngBuffer = pngData.asPng();
+      return writeOutput(outputFile, pngBuffer);
+    } catch (e: any) {
+      console.error(`Error: Could not render PNG: ${e.message}`);
+      return false;
     }
   } else if (format === "html") {
     const html = wrapSvgInHtml(svg);
-    if (outputFile) {
-      writeFileSync(outputFile, html, "utf-8");
-    } else {
-      process.stdout.write(html);
-    }
+    return writeOutput(outputFile, html, "utf-8");
   } else {
-    if (outputFile) {
-      writeFileSync(outputFile, svg, "utf-8");
-    } else {
-      process.stdout.write(svg);
-    }
+    return writeOutput(outputFile, svg, "utf-8");
   }
-
-  return true;
 }
 
 const ok = await renderFile(inputFile, outputFile, format, theme);
@@ -300,7 +319,7 @@ if (watchMode) {
     console.error(`Rendered ${inputFile}. Watching for changes...`);
   }
   watch(inputFile, async (eventType) => {
-    if (eventType === "change") {
+    if (eventType === "change" || eventType === "rename") {
       const ok = await renderFile(inputFile, outputFile, format, theme);
       if (ok) {
         console.error(`Rendered ${inputFile}`);
