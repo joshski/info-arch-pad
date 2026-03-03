@@ -3,6 +3,8 @@ import { render } from "./renderer";
 import { layout } from "./layout";
 import type { IADiagram } from "./model";
 import { darkTheme, defaultTheme } from "./theme";
+import { parse } from "./parser";
+import { complexDiagramEdgeCount, complexDiagramSource } from "./test-fixtures";
 
 function renderDiagram(diagram: IADiagram): string {
   return render(layout(diagram));
@@ -581,3 +583,13 @@ test("nodes without status use default fill", () => {
   expect(svg).not.toContain('opacity=');
 });
 
+test("renders the shared complex fixture with dense escaped SVG output", () => {
+  const svg = render(layout(parse(complexDiagramSource)));
+
+  expect((svg.match(/marker-end="url\(#arrowhead\)"/g) || []).length).toBe(complexDiagramEdgeCount);
+  expect(svg).toContain("Landing &amp; &lt;Overview&gt; &quot;Alpha&quot;");
+  expect(svg).toContain('[hero &amp; promo &lt;grid&gt; &quot;A&quot;]');
+  expect(svg).toContain("Primary path for cafe users and admins in café &lt;beta&gt;");
+  expect(svg).toContain("https://docs.example.com/api?ref=ia&amp;mode=svg");
+  expect(svg).not.toContain('Landing & <Overview> "Alpha"');
+});

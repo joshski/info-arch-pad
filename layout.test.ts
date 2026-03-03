@@ -1,6 +1,12 @@
 import { test, expect } from "bun:test";
 import { layout } from "./layout";
 import type { IADiagram } from "./model";
+import { parse } from "./parser";
+import {
+  complexDiagramEdgeCount,
+  complexDiagramExternalEdgeCount,
+  complexDiagramSource,
+} from "./test-fixtures";
 
 test("lays out a single node", () => {
   const diagram: IADiagram = {
@@ -455,5 +461,30 @@ test("multi-site layout offsets nodes vertically for site labels", () => {
   // Multi-site nodes should be offset down to make room for site labels
   for (const node of result.nodes) {
     expect(node.y).toBeGreaterThan(0);
+  }
+});
+
+test("lays out the shared complex fixture with bounded dense edges", () => {
+  const result = layout(parse(complexDiagramSource));
+  const externalEdges = result.edges.filter((edge) => edge.url);
+
+  expect(result.nodes).toHaveLength(5);
+  expect(result.nodes[1].children).toHaveLength(1);
+  expect(result.edges).toHaveLength(complexDiagramEdgeCount);
+  expect(externalEdges).toHaveLength(complexDiagramExternalEdgeCount);
+  expect(result.width).toBeGreaterThan(400);
+  expect(result.width).toBeLessThanOrEqual(1600);
+  expect(result.height).toBeGreaterThan(200);
+  expect(result.height).toBeLessThan(900);
+
+  for (const edge of result.edges) {
+    expect(edge.x1).toBeGreaterThanOrEqual(0);
+    expect(edge.x1).toBeLessThanOrEqual(result.width);
+    expect(edge.x2).toBeGreaterThanOrEqual(0);
+    expect(edge.x2).toBeLessThanOrEqual(result.width);
+    expect(edge.y1).toBeGreaterThanOrEqual(0);
+    expect(edge.y1).toBeLessThanOrEqual(result.height);
+    expect(edge.y2).toBeGreaterThanOrEqual(0);
+    expect(edge.y2).toBeLessThanOrEqual(result.height);
   }
 });

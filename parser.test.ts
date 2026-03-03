@@ -1,5 +1,6 @@
 import { test, expect } from "bun:test";
 import { parse } from "./parser";
+import { complexDiagramSource } from "./test-fixtures";
 
 test("parses minimal hierarchy", () => {
   const result = parse(`
@@ -334,4 +335,29 @@ site MyApp
 `);
   expect(result.nodes[0].name).toBe("dashboard");
   expect(result.nodes[0].status).toBe("draft");
+});
+
+test("parses the shared complex fixture with tabs and escaped text content", () => {
+  const result = parse(complexDiagramSource);
+
+  expect(result.siteName).toBe("ProductSuite");
+  expect(result.nodes).toHaveLength(5);
+
+  const home = result.nodes[0];
+  expect(home.annotation).toBe('Landing & <Overview> "Alpha"');
+  expect(home.components).toEqual(['hero & promo <grid> "A"']);
+  expect(home.notes).toEqual(["Primary path for cafe users and admins in café <beta>"]);
+  expect(home.links).toHaveLength(4);
+
+  const catalog = result.nodes[1];
+  expect(catalog.children).toHaveLength(1);
+  expect(catalog.children[0].isPageStack).toBe(true);
+  expect(catalog.children[0].annotation).toBe('Detail > Compare "Beta"');
+  expect(catalog.children[0].notes).toEqual(["Resume details and FAQs in résumé <important>"]);
+
+  const pricing = result.nodes[2];
+  expect(pricing.annotation).toBe("Plans\tand billing");
+
+  const support = result.nodes[4];
+  expect(support.links[0].url).toBe("https://status.example.com/incidents?src=ia&scope=public");
 });
