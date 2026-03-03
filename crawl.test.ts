@@ -87,6 +87,36 @@ test("normalizes trailing slashes and query strings", async () => {
   }
 });
 
+test("resolves realistic relative links from parsed HTML", async () => {
+  const { server, origin } = serve({
+    "/": `<html><body><a href="/docs/">Docs</a><a href="/contact?via=nav">Contact</a></body></html>`,
+    "/docs/": `<html><head><base href="/docs/"></head><body><a HREF='getting-started/'>Start</a><a href='./api?version=1#top'>API</a><a href='../contact#team'>Contact</a><a href='mailto:test@example.com'>Mail</a></body></html>`,
+    "/docs/getting-started/": `<html><body>Start</body></html>`,
+    "/docs/api": `<html><body>API</body></html>`,
+    "/contact": `<html><body>Contact</body></html>`,
+  });
+
+  try {
+    const pages = await crawl(origin, { maxPages: 50 });
+    expect(pages.map((page) => page.path).sort()).toEqual([
+      "/",
+      "/contact",
+      "/docs",
+      "/docs/api",
+      "/docs/getting-started",
+    ]);
+
+    const docsPage = pages.find((page) => page.path === "/docs");
+    expect(docsPage?.linksTo).toEqual([
+      "/docs/getting-started",
+      "/docs/api",
+      "/contact",
+    ]);
+  } finally {
+    server.stop();
+  }
+});
+
 test("pagesToIa generates valid .ia syntax from crawled pages", () => {
   const pages = [
     { url: "http://example.com/", path: "/", linksTo: ["/about", "/blog"] },

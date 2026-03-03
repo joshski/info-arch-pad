@@ -49,6 +49,36 @@ test("parseSitemapXml handles empty sitemap", () => {
   expect(entries).toHaveLength(0);
 });
 
+test("sitemap import handles realistic nested URLs", () => {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://example.com/docs/getting-started/</loc></url>
+  <url><loc>https://example.com/</loc></url>
+  <url><loc>https://example.com/docs/</loc></url>
+  <url><loc>https://example.com/docs/api?version=1</loc></url>
+  <url><loc>https://example.com/contact#team</loc></url>
+  <url><loc>https://example.com/docs/getting-started?ref=nav</loc></url>
+</urlset>`;
+
+  const entries = parseSitemapXml(xml);
+  expect(entries.map((entry) => entry.path)).toEqual([
+    "/docs/getting-started",
+    "/",
+    "/docs",
+    "/docs/api",
+    "/contact",
+  ]);
+
+  const ia = sitemapToIa(entries, "example-com");
+  expect(ia).toContain("docs /docs");
+  expect(ia).toContain("getting-started /docs/getting-started");
+  expect(ia).toContain("api /docs/api");
+
+  const diagram = parse(ia);
+  expect(diagram.siteName).toBe("example-com");
+  expect(diagram.nodes.length).toBeGreaterThan(0);
+});
+
 test("sitemapToIa generates valid .ia syntax", () => {
   const entries = [
     { path: "/" },
