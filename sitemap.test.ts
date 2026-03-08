@@ -199,3 +199,29 @@ test("sitemap CLI shows error for missing argument", async () => {
   expect(exitCode).not.toBe(0);
   expect(stderr).toContain("sitemap requires");
 });
+
+test("sitemap CLI routes HTTP fetch failures through formatted errors", async () => {
+  const server = Bun.serve({
+    port: 0,
+    fetch() {
+      return new Response("Not found", { status: 404, statusText: "Not Found" });
+    },
+  });
+  const sitemapUrl = `http://localhost:${server.port}/sitemap.xml`;
+
+  try {
+    const proc = Bun.spawn(["bun", CLI, "sitemap", sitemapUrl], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const stderr = await new Response(proc.stderr).text();
+    const exitCode = await proc.exited;
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain(`Error: Could not fetch sitemap from "${sitemapUrl}"`);
+    expect(stderr).toContain("Cause: HTTP 404");
+    expect(stderr).toContain("Next step: Verify the sitemap URL or file is reachable and contains valid sitemap XML, then run the command again.");
+  } finally {
+    server.stop();
+  }
+});

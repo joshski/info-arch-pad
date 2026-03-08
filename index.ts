@@ -85,14 +85,39 @@ if (args[0] === "sitemap") {
   let xml: string;
   try {
     xml = await fetchSitemap(sitemapSource);
-  } catch (e: any) {
-    console.error(`Error: ${e.message}`);
+  } catch (e: unknown) {
+    console.error(
+      formatCliError({
+        context: `Could not fetch sitemap from "${sitemapSource}"`,
+        cause: e,
+        nextStep: "Verify the sitemap URL or file is reachable and contains valid sitemap XML, then run the command again.",
+      }),
+    );
     process.exit(1);
   }
 
-  const entries = parseSitemapXml(xml);
+  let entries: ReturnType<typeof parseSitemapXml>;
+  try {
+    entries = parseSitemapXml(xml);
+  } catch (e: unknown) {
+    console.error(
+      formatCliError({
+        context: `Could not parse sitemap from "${sitemapSource}"`,
+        cause: e,
+        nextStep: "Verify the sitemap URL or file is reachable and contains valid sitemap XML, then run the command again.",
+      }),
+    );
+    process.exit(1);
+  }
+
   if (entries.length === 0) {
-    console.error("Error: No URLs found in sitemap");
+    console.error(
+      formatCliError({
+        context: `Could not parse sitemap from "${sitemapSource}"`,
+        cause: "No <loc> URL entries were found in the sitemap XML.",
+        nextStep: "Verify the sitemap URL or file is reachable and contains valid sitemap XML, then run the command again.",
+      }),
+    );
     process.exit(1);
   }
 

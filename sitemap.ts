@@ -14,7 +14,10 @@ export async function fetchSitemap(urlOrFile: string): Promise<string> {
   if (urlOrFile.startsWith("http://") || urlOrFile.startsWith("https://")) {
     const response = await fetch(urlOrFile);
     if (!response.ok) {
-      throw new Error(`Failed to fetch sitemap: ${response.status}`);
+      const statusDetail = response.statusText
+        ? `${response.status} ${response.statusText}`
+        : String(response.status);
+      throw new Error(`HTTP ${statusDetail} from ${response.url || urlOrFile}`);
     }
     return await response.text();
   }
