@@ -19,7 +19,7 @@ This task should deliver one end-to-end slice: running `sitemap` with a failing 
 
 ## Blocked By
 
-- [Standardize CLI Error Format For Local File Read Failures](./standardize-cli-error-format-for-local-file-read-failures.md)
+(none)
 
 ## Definition of Done
 

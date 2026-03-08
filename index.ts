@@ -6,6 +6,7 @@ import { themes } from "./theme";
 import type { Theme } from "./theme";
 import { crawl, pagesToIa } from "./crawl";
 import { fetchSitemap, parseSitemapXml, sitemapToIa, siteNameFromXml } from "./sitemap";
+import { formatCliError } from "./cli-error";
 
 const args = process.argv.slice(2);
 
@@ -264,8 +265,14 @@ async function renderFile(inputFile: string, outputFile: string | undefined, for
   let source: string;
   try {
     source = readFileSync(inputFile, "utf-8");
-  } catch {
-    console.error(`Error: Could not read file "${inputFile}"`);
+  } catch (e: unknown) {
+    console.error(
+      formatCliError({
+        context: `Could not read input file "${inputFile}"`,
+        cause: e,
+        nextStep: "Verify the input file path exists and is readable, then run the command again.",
+      }),
+    );
     return false;
   }
 

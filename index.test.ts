@@ -98,7 +98,10 @@ test("shows error for missing input file", async () => {
   const exitCode = await proc.exited;
 
   expect(exitCode).not.toBe(0);
-  expect(stderr).toContain("Could not read file");
+  expect(stderr).toContain('Error: Could not read input file "/nonexistent/file.ia"');
+  expect(stderr).toContain("Cause:");
+  expect(stderr).toContain("ENOENT");
+  expect(stderr).toContain("Next step: Verify the input file path exists and is readable, then run the command again.");
 });
 
 test("applies dark theme with --theme flag", async () => {
@@ -306,7 +309,10 @@ test("--watch reports an error after the input file is deleted and keeps running
   const stderr = await stderrPromise;
 
   expect(stderr).toContain("Watching for changes");
-  expect(stderr).toContain(`Could not read file "${inputFile}"`);
+  expect(stderr).toContain(`Error: Could not read input file "${inputFile}"`);
+  expect(stderr).toContain("Cause:");
+  expect(stderr).toContain("ENOENT");
+  expect(stderr).toContain("Next step: Verify the input file path exists and is readable, then run the command again.");
 
   await rm(dir, { recursive: true });
 });
