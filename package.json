@@ -13,7 +13,7 @@
     "build:playground": "bun build playground.ts --outfile playground.bundle.js --target browser"
   },
   "dependencies": {
-    "@joshski/dust": "^0.1.33",
+    "@joshski/dust": "^0.1.90",
     "@resvg/resvg-js": "^2.6.2",
     "peggy": "^5.0.6"
   }

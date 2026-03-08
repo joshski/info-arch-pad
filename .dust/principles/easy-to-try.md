@@ -2,11 +2,11 @@
 
 A new user should understand what info-arch-pad does and try it within minutes. This is especially important for UX/IA professionals who may not be developers.
 
-## Parent Goal
+## Parent Principle
 
 (none)
 
-## Sub-Goals
+## Sub-Principles
 
 (none)
 

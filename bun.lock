@@ -5,7 +5,7 @@
     "": {
       "name": "info-arch-pad",
       "dependencies": {
-        "@joshski/dust": "^0.1.33",
+        "@joshski/dust": "^0.1.90",
         "@resvg/resvg-js": "^2.6.2",
         "peggy": "^5.0.6",
       },
@@ -18,7 +18,7 @@
     },
   },
   "packages": {
-    "@joshski/dust": ["@joshski/dust@0.1.33", "", { "bin": { "dust": "dist/dust.js" } }, "sha512-AsXB4sc7u6JFKuqZb6n9BGoNOM0j4yEyoTm6uNQnDDP0gQLvGnsbu7wT/DiuMdc5BIHrse0dXOUXfrXV4syI7w=="],
+    "@joshski/dust": ["@joshski/dust@0.1.90", "", { "bin": { "dust": "dist/dust.js" } }, "sha512-5Iv3Qez7Y22KcpyFWLbA32GgbDbmg48evWmb2GYiprFI4rpnF3gau6ZjJcRNxPNH5srTjiONIbUuxCJIziASwA=="],
 
     "@peggyjs/from-mem": ["@peggyjs/from-mem@3.1.1", "", { "dependencies": { "semver": "7.7.2" } }, "sha512-m5OEjgJaePWpyNtQCvRZkpLoV+z44eh6QIO9yEwQuOThdUdkECO3wcKLT3tFA3H8WM5bxU/K/dpmo7r/X16UEw=="],
 

@@ -1,6 +1,6 @@
 # Guard watch mode against unhandled render failures
 
-Watch mode registers an async callback in [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L321). The returned promise is not explicitly observed. If `renderFile()` or any future code in that callback throws before converting the failure into `false`, the rejection can escape the `fs.watch()` callback path.
+Watch mode registers an async callback in [index.ts](../../index.ts#L321). The returned promise is not explicitly observed. If `renderFile()` or any future code in that callback throws before converting the failure into `false`, the rejection can escape the `fs.watch()` callback path.
 
 Pattern: fire-and-forget promise without explicit error handling.
 

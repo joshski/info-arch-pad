@@ -2,11 +2,11 @@
 
 Diagrams should look professional out of the box. They should be good enough to drop into a presentation, client deliverable, or documentation site without post-processing.
 
-## Parent Goal
+## Parent Principle
 
 (none)
 
-## Sub-Goals
+## Sub-Principles
 
 (none)
 

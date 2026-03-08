@@ -1,6 +1,6 @@
 # Preserve CLI error context and next steps
 
-Several CLI paths flatten rich errors into generic messages. In [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L265), a failed `readFileSync()` is reduced to `Could not read file` with no `ENOENT`, permission, or path detail. In [sitemap.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/sitemap.ts#L17), HTTP failures become `Failed to fetch sitemap: <status>` without the URL or any recovery hint, and [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L87) just echoes that generic message back to stderr.
+Several CLI paths flatten rich errors into generic messages. In [index.ts](../../index.ts#L265), a failed `readFileSync()` is reduced to `Could not read file` with no `ENOENT`, permission, or path detail. In [sitemap.ts](../../sitemap.ts#L17), HTTP failures become `Failed to fetch sitemap: <status>` without the URL or any recovery hint, and [index.ts](../../index.ts#L87) just echoes that generic message back to stderr.
 
 Pattern: missing error context and non-actionable error messages.
 

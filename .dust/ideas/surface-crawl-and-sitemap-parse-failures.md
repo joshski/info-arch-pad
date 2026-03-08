@@ -1,6 +1,6 @@
 # Surface crawl and sitemap parse failures
 
-The crawler and sitemap import paths currently discard several parsing and fetch errors without any trace. In [crawl.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/crawl.ts#L29), failed `fetch()` calls fall through `catch { continue; }`, and malformed links inside [crawl.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/crawl.ts#L74) are skipped the same way. The sitemap parser does the same in [sitemap.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/sitemap.ts#L30) and [sitemap.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/sitemap.ts#L123).
+The crawler and sitemap import paths currently discard several parsing and fetch errors without any trace. In [crawl.ts](../../crawl.ts#L29), failed `fetch()` calls fall through `catch { continue; }`, and malformed links inside [crawl.ts](../../crawl.ts#L74) are skipped the same way. The sitemap parser does the same in [sitemap.ts](../../sitemap.ts#L30) and [sitemap.ts](../../sitemap.ts#L123).
 
 Pattern: silently swallowed errors and inconsistent recovery.
 

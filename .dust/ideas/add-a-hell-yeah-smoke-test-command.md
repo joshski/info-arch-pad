@@ -1,10 +1,10 @@
 # Add a "hell yeah" smoke-test command
 
-The CLI in [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L1) has three successful entry points today. Users can render an IA file, crawl a site, or parse a sitemap. Each path requires either local input or a network target, and each produces structured output. There is no zero-setup command a new user can run immediately after install to confirm the tool is wired up correctly.
+The CLI in [index.ts](../../index.ts#L1) has three successful entry points today. Users can render an IA file, crawl a site, or parse a sitemap. Each path requires either local input or a network target, and each produces structured output. There is no zero-setup command a new user can run immediately after install to confirm the tool is wired up correctly.
 
-Adding a tiny command that prints exactly `Hell yeah` would create a fast smoke test for local installs, shell scripts, and agent workflows. This fits the [Easy to try](/Users/josh/.dust/repos/joshski/info-arch-pad/.dust/goals/easy-to-try.md) goal because it removes the need to learn the DSL or prepare a sample file before seeing a successful result. It also matches the CLI's existing convention of reserving stdout for primary command output: successful paths in [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L63) and [index.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.ts#L252) write their main artifact directly to stdout, while usage and status messages go to stderr.
+Adding a tiny command that prints exactly `Hell yeah` would create a fast smoke test for local installs, shell scripts, and agent workflows. This fits the [Easy to try](../principles/easy-to-try.md) goal because it removes the need to learn the DSL or prepare a sample file before seeing a successful result. It also matches the CLI's existing convention of reserving stdout for primary command output: successful paths in [index.ts](../../index.ts#L63) and [index.ts](../../index.ts#L252) write their main artifact directly to stdout, while usage and status messages go to stderr.
 
-Because [index.test.ts](/Users/josh/.dust/repos/joshski/info-arch-pad/index.test.ts#L21) already asserts exact stdout behavior for CLI commands, this idea should keep the contract intentionally narrow. The success path should emit only the expected success string so it can be used in shell checks without extra parsing.
+Because [index.test.ts](../../index.test.ts#L21) already asserts exact stdout behavior for CLI commands, this idea should keep the contract intentionally narrow. The success path should emit only the expected success string so it can be used in shell checks without extra parsing.
 
 ## Open Questions
 
